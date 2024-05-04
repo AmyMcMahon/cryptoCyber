@@ -1,0 +1,54 @@
+<html>
+    <link
+        rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.indigo.min.css"
+    />
+    <body>
+        <main class="container-fluid">
+        <h1> Hi, User </h1>
+        <article>
+        <form>
+            <fieldset role="group">
+                <label>
+                    <input
+                        type="file"
+                        name="file"
+                        accept=".txt"
+                    />
+                </label>
+
+                <select name="select" aria-label="Select" required>
+                    <option selected disabled value="">Select</option>
+                    <option>Solid</option>
+                    <option>Liquid</option>
+                    <option>Gas</option>
+                    <option>Plasma</option>false
+                  </select>
+                  
+                <input
+                    type="submit"
+                    value="Upload"
+                />
+            </fieldset>
+        </form>
+        </article>
+        <h2>Download Files</h2>
+        <table>
+            <thead>
+              <tr>
+                <th scope="col">Files</th>
+                <th scope="col">Owner</th>
+                <th scope="col">Download</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th scope="row">file.txt</th>
+                <td>Mark</td>
+                <td><button></button></td>
+              </tr>
+            </tbody>
+          </table>
+        </main> 
+    </body>
+</html>
