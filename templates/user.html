@@ -1,54 +1,39 @@
-<html>
-    <link
-        rel="stylesheet"
-        href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.indigo.min.css"
-    />
-    <body>
-        <main class="container-fluid">
-        <h1> Hi, User </h1>
-        <article>
-        <form>
-            <fieldset role="group">
-                <label>
-                    <input
-                        type="file"
-                        name="file"
-                        accept=".txt"
-                    />
-                </label>
+<!DOCTYPE html>
+<html lang="en">
 
-                <select name="select" aria-label="Select" required>
-                    <option selected disabled value="">Select</option>
-                    <option>Solid</option>
-                    <option>Liquid</option>
-                    <option>Gas</option>
-                    <option>Plasma</option>false
-                  </select>
-                  
-                <input
-                    type="submit"
-                    value="Upload"
-                />
-            </fieldset>
-        </form>
-        </article>
-        <h2>Download Files</h2>
-        <table>
-            <thead>
-              <tr>
-                <th scope="col">Files</th>
-                <th scope="col">Owner</th>
-                <th scope="col">Download</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <th scope="row">file.txt</th>
-                <td>Mark</td>
-                <td><button></button></td>
-              </tr>
-            </tbody>
-          </table>
-        </main> 
-    </body>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>User Page</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.indigo.min.css" />
+</head>
+
+<body>
+  <h1>User Page</h1>
+
+  <form action="/upload" method="POST" enctype="multipart/form-data">
+    <label for="file">Choose a file:</label>
+    <input type="file" id="file" name="file" accept=".txt">
+    <button type="submit">Upload</button>
+  </form>
+
+  <h2>Download Files</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>File Name</th>
+        <th>Download Link</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for file in files %}
+      <tr>
+        <td>{{ file }}</td>
+        <td><a href="/download/{{ file }}">Download</a></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</body>
+
 </html>
