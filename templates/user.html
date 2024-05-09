@@ -9,26 +9,25 @@
 </head>
 
 <body>
+  <main class="container">
   <h1>User Page</h1>
 
   <form action="/upload" method="POST" enctype="multipart/form-data">
     <label for="file">Choose a file:</label>
     <input type="file" id="file" name="file" accept=".txt">
+
+    <select name="select" aria-label="Select" required>
+      <option selected disabled value="">Select</option>
+      <option>Dont</option>
+      <option>Confuse</option>
+      <option>Mark</option>
+      <option>Or</option>
+      <option>Amy</option>
+    </select>
+    
     <button type="submit">Upload</button>
     
-    <select name="select" aria-label="Select" required>
-                    <option selected disabled value="">Select</option>
-                    <option>Dont</option>
-                    <option>Confuse</option>
-                    <option>Mark</option>
-                    <option>Or</option>
-                    <option>Amy</option>
-                  </select>
-                  
-                <input
-                    type="submit"
-                    value="Upload"
-                />
+    
   </form>
 
   <h2>Download Files</h2>
@@ -48,6 +47,7 @@
       {% endfor %}
     </tbody>
   </table>
+</main>``
 </body>
 
 </html>
