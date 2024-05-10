@@ -5,19 +5,19 @@
 />
 <body>
     <main class="container">
-        <h1> Login </h1>
+        <h1> Create An Account </h1>
         <form>
             <fieldset>
-              <label>
-                Email
+                <label>
+                username
                 <input
-                  type="email"
-                  name="email"
-                  placeholder="Email"
-                  autocomplete="email"
+                  type="text"
+                  name="username"
+                  placeholder="Username"
+                  autocomplete="usernames"
                 />
-              </label>
-              <label>
+                </label>
+                <label>
                 Password
                 <input
                   type="password"
@@ -25,7 +25,16 @@
                   placeholder="Password"
                   autocomplete="current-password"
                 />
-              </label>
+                </label>
+                <label>
+                    Public Key
+                    <input
+                      type="text"
+                      name="publicKey"
+                      placeholder="Public Key"
+                      autocomplete="publicKey"
+                    />
+                </label>
             </fieldset>
           
             <input
