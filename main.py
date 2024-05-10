@@ -26,6 +26,10 @@ def user():
     files = os.listdir(UPLOAD_FOLDER)
     return render_template('user.html', files=files)
 
+@app.route("/admin")
+def admin():
+    return render_template('admin.html')
+
 # Route for file upload and processing
 @app.route("/upload", methods=['POST'])
 def upload_file():
