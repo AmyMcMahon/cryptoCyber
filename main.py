@@ -30,6 +30,10 @@ connect.execute(
 )
 
 
+ALLOWED_EXTENSIONS = {'txt'}
+app.config['UPLOAD_FOLDER'] = 'uploads'
+app.config['DOWNLOAD_FOLDER'] = 'downloads'
+
 # Function to check if the file extension is allowed
 def allowed_file(filename):
     return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
@@ -63,8 +67,12 @@ def create():
 # Route for user page
 @app.route("/user")
 def user():
-    files = os.listdir(UPLOAD_FOLDER)
-    return render_template("user.html", files=files)
+
+    #files = os.listdir(UPLOAD_FOLDER)
+    #return render_template("user.html", files=files)
+
+    aes_files = [file for file in os.listdir(app.config['UPLOAD_FOLDER']) if file.endswith('.aes')]
+    return render_template('user.html', files=aes_files)
 
 
 @app.route("/admin")
@@ -100,9 +108,12 @@ def upload_file():
         connect.commit()
         file.save(filePath)
         enc.process_file(filename, password, app)
-        return redirect(url_for("user"))  # Redirect to user page
+
+        return redirect(url_for('user')) # Redirect to user page
+
     else:
         return jsonify({"error": "File type not allowed"})
+
 
 
 @app.route("/download/<filename>")
@@ -121,10 +132,22 @@ def download(filename):
         return jsonify({"error": "File authentication failed"})
 
 
-# # Route for downloading processed files
-# @app.route('/download/<filename>')
-# def download_file(filename):
-#     return send_file(os.path.join(app.config['UPLOAD_FOLDER'], filename), as_attachment=True)
+# Function to decrypt a file, verify its signature, and download it
+@app.route('/decrypt_and_download/<filename>')
+def decrypt_and_download(filename):
+    password = 'password'
+    
+    # Decrypt the file
+    decrypted_filename = filename.replace('.aes', '') 
+    enc.decrypt_file(filename, decrypted_filename, password, app)
+    
+    if enc.verify_signature(decrypted_filename, app):
+        send_file(os.path.join(app.config['DOWNLOAD_FOLDER'], decrypted_filename),
+                         as_attachment=True)
+        return redirect(url_for('user'))
+    else:
+        return "Signature verification failed."
+
 
 if __name__ == "__main__":
     app.run()
