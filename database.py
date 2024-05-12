@@ -34,8 +34,31 @@ class Database():
         self.connect.commit()
 
     #for debug, get rid of ltr
-    def getAllUsers(self):
+    def getAllUsersAdmin(self):
         self.cursor.execute("SELECT username, password,public_key FROM USERS")
         rows = self.cursor.fetchall()
         return rows
     
+    def getAllUsers(self):
+        self.cursor.execute("SELECT username FROM USERS")
+        rows = self.cursor.fetchall()
+        return rows
+
+    def getUsersFiles(self, username):
+        self.cursor.execute('SELECT sender, file_path FROM FILES WHERE sender = "' + username + '"')
+        rows = self.cursor.fetchall()
+        clean_rows = []
+        for sender, file_path in rows:
+            file_path = file_path.split("/")[-1]
+            clean_rows.append((sender, file_path))
+        return clean_rows
+    
+    #maybe get rid of this ltr
+    def getAllFilesAdmin(self):
+        self.cursor.execute('SELECT sender, receiver, file_path FROM FILES')
+        rows = self.cursor.fetchall()
+        clean_rows = []
+        for sender, receiver, file_path in rows:
+            file_path = file_path.split("/")[-1]
+            clean_rows.append((sender,receiver, file_path))
+        return clean_rows

@@ -54,18 +54,18 @@ def create():
 # Route for user page
 @app.route("/user")
 def user():
-
-    #files = os.listdir(UPLOAD_FOLDER)
-    #return render_template("user.html", files=files)
-
-    aes_files = [file for file in os.listdir(app.config['UPLOAD_FOLDER']) if file.endswith('.aes')]
-    return render_template('user.html', files=aes_files)
+    #aes_files = [file for file in os.listdir(app.config['UPLOAD_FOLDER']) if file.endswith('.aes')]
+    user = "test" #change me ltr
+    files = db.getUsersFiles(user)
+    users = db.getAllUsers()
+    return render_template('user.html', files=files, users=users)
 
 
 @app.route("/admin")
 def admin():
-    users = db.getAllUsers()
-    return render_template("admin.html", users=users)
+    users = db.getAllUsersAdmin()
+    files = db.getAllFilesAdmin()
+    return render_template("admin.html", users=users, files = files)
 
 
 # Route for file upload and processing
@@ -79,7 +79,8 @@ def upload_file():
         return jsonify({"error": "No selected file"})
 
     if file and allowed_file_type(file.filename):
-        password = db.getPassword("test1")
+        #password = db.getPassword("test1")
+        password = "password" # Hardcoded password, to be changed to above??
         filename = secure_filename(file.filename)
         receiver = request.form["select"]
         username = "test"
