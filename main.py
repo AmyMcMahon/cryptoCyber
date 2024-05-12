@@ -1,5 +1,13 @@
 import sqlite3
-from flask import Flask, render_template, request, jsonify, send_file, redirect, url_for
+from flask import (
+    Flask,
+    render_template,
+    request,
+    jsonify,
+    send_file,
+    redirect,
+    url_for,
+)
 from werkzeug.utils import secure_filename
 import os
 import encryption as enc
@@ -11,6 +19,7 @@ app = Flask(__name__)
 UPLOAD_FOLDER = "uploads"
 ALLOWED_EXTENSIONS = {"txt"}
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
+
 
 connect = sqlite3.connect("database.db")
 connect.execute(
@@ -64,7 +73,7 @@ def admin():
 
 
 # Route for file upload and processing
-@app.route("/upload", methods=["POST"])
+@app.route("/upload", methods=["POST", "GET"])
 def upload_file():
     if "file" not in request.files:
         return jsonify({"error": "No file part"})
@@ -76,13 +85,19 @@ def upload_file():
     if file and allowed_file(file.filename):
         connect = sqlite3.connect("database.db")
         cursor = connect.cursor()
-        cursor.execute('SELECT password FROM USERS WHERE username = "test"')
-        password = cursor.fetchall()
+        cursor.execute('SELECT password FROM USERS WHERE username = "test1"')
+        row = cursor.fetchone()
+        password = row[0]
         filename = secure_filename(file.filename)
         receiver = request.form["select"]
-        print(receiver, password, filename)
-
-        file.save(os.path.join(app.config["UPLOAD_FOLDER"], filename))
+        username = "test"
+        filePath = os.path.join(app.config["UPLOAD_FOLDER"], filename)
+        cursor.execute(
+            "INSERT INTO FILES(sender, receiver, file_path) VALUES (?, ?, ?)",
+            (username, receiver, filePath),
+        )
+        connect.commit()
+        file.save(filePath)
         enc.process_file(filename, password, app)
         return redirect(url_for("user"))  # Redirect to user page
     else:
