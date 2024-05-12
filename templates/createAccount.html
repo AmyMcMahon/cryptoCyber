@@ -5,33 +5,29 @@
 />
 <body>
     <main class="container">
-        <h1> Login </h1>
-        <form>
+        <h1> Create an Account </h1>
+        <form action="/createAccount" method="POST" enctype="multipart/form-data">
             <fieldset>
-              <label>
-                Email
+                <label>
+                Username
                 <input
-                  type="email"
-                  name="email"
-                  placeholder="Email"
-                  autocomplete="email"
+                  type="text"
+                  name="username"
+                  placeholder="Username"
+                  autocomplete="Username"
                 />
-              </label>
-              <label>
+                </label>
+                <label>
                 Password
                 <input
                   type="password"
                   name="password"
                   placeholder="Password"
-                  autocomplete="current-password"
+                  autocomplete="Password"
                 />
-              </label>
+                </label>
+                <button type="submit" class="btn btn-dark btn-sm">Sign Up</button>
             </fieldset>
-          
-            <input
-              type="submit"
-              value="Log In"
-            />
           </form>
 
           <button>
