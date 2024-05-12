@@ -18,11 +18,9 @@
 
     <select name="select" aria-label="Select" required>
       <option selected disabled value="">Select</option>
-      <option>Dont</option>
-      <option>Confuse</option>
-      <option>Mark</option>
-      <option>Or</option>
-      <option>Amy</option>
+      {% for user in users %}
+      <option>{{ user[0] }}</option>
+      {% endfor %}
     </select>
     
     <button type="submit">Upload</button>
@@ -35,19 +33,21 @@
     <thead>
       <tr>
         <th>File Name</th>
+        <th>Owner</th>
         <th>Download Link</th>
       </tr>
     </thead>
     <tbody>
-      {% for file in files %}
+      {% for sender, file in files %}
       <tr>
         <td>{{ file }}</td>
+        <td>{{ sender }}</td>
         <td><a href="/decrypt_and_download/{{ file }}">Download</a></td>
       </tr>
       {% endfor %}
     </tbody>
   </table>
-</main>``
+</main>
 </body>
 
 </html>
