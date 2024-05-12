@@ -37,6 +37,7 @@ class Database():
         self.cursor.execute("SELECT username, password, public_key FROM USERS")
         rows = self.cursor.fetchall()
         return rows
+
     
     def getAllUsers(self):
         self.cursor.execute("SELECT username FROM USERS")
