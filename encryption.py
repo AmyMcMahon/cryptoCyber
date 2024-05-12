@@ -1,15 +1,24 @@
-import hashlib
-import pyAesCrypt
 import os
+import pyAesCrypt
+import rsa
 
+# Generate a key pair
+public_key, private_key = rsa.newkeys(2048)
 
+# Save the keys to files
+with open('public_key.pem', 'wb') as f:
+    f.write(public_key.save_pkcs1())
+
+with open('private_key.pem', 'wb') as f:
+    f.write(private_key.save_pkcs1())
+    
 # Function to process the uploaded file
 def process_file(filename, password, app):
     # Encryption
     encrypt_file(filename, password, app)
     
     # Sender side Integrity
-    calculate_hash(filename, password, app)
+    sign_file(filename, password, app)
     
     # Remove the original text file
     os.remove(os.path.join(app.config['UPLOAD_FOLDER'], filename))
@@ -23,17 +32,43 @@ def encrypt_file(filename, password, app):
         with open(output_file, 'wb') as fOut:
             pyAesCrypt.encryptStream(fIn, fOut, password, bufferSize)
 
-# Function to calculate hash of a file
-def calculate_hash(filename, password, app):
+# Function to sign a file with private key
+def sign_file(filename, password, app):
     with open(os.path.join(app.config['UPLOAD_FOLDER'], filename), 'rb') as f:
         content = f.read()
-        text = content + password.encode()
-        sender_hash_object = hashlib.md5(text)
-        hash_value = sender_hash_object.hexdigest()
-        with open(os.path.join(app.config['UPLOAD_FOLDER'], 'hash.txt'), 'w') as hash_file:
-            hash_file.write(hash_value)
+    
+    # Load private key
+    with open('private_key.pem', 'rb') as f:
+        private_key_data = f.read()
+    priv_key = rsa.PrivateKey.load_pkcs1(private_key_data)
+    
+    # Sign the content
+    signature = rsa.sign(content, priv_key, 'SHA-256')
+    
+    # Save the signature
+    with open(os.path.join(app.config['UPLOAD_FOLDER'], filename + '.sig'), 'wb') as f:
+        f.write(signature)
 
-
+# Function to verify signature with public key
+def verify_signature(filename, app):
+    with open(os.path.join(app.config['UPLOAD_FOLDER'], filename), 'rb') as f:
+        content = f.read()
+    
+    # Load public key
+    with open('public_key.pem', 'rb') as f:
+        public_key_data = f.read()
+    pub_key = rsa.PublicKey.load_pkcs1(public_key_data)
+    
+    # Load signature
+    with open(os.path.join(app.config['UPLOAD_FOLDER'], filename + '.sig'), 'rb') as f:
+        signature = f.read()
+    
+    # Verify the signature
+    try:
+        rsa.verify(content, signature, pub_key)
+        return True
+    except rsa.VerificationError:
+        return False
 
 # Function to decrypt a file
 def decrypt_file(filename, decrypted_filename, password, app):
@@ -46,18 +81,3 @@ def decrypt_file(filename, decrypted_filename, password, app):
                 pyAesCrypt.decryptStream(fIn, fOut, password, bufferSize)
             except ValueError:
                 print("Decryption failed")
-
-# Function to authenticate a file using a hash file
-def authenticate_file(filename):
-    hash_filename = filename + '.hash'
-    if not os.path.isfile(hash_filename):
-        return False
-    
-    with open(hash_filename, 'r') as f:
-        expected_hash = f.read().strip()
-
-    with open(filename, 'rb') as f:
-        content = f.read()
-        file_hash = hashlib.md5(content).hexdigest()
-
-    return file_hash == expected_hash
