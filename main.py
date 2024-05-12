@@ -92,6 +92,7 @@ def upload_file():
         receiver = request.form["select"]
         username = "test"
         filePath = os.path.join(app.config["UPLOAD_FOLDER"], filename)
+
         cursor.execute(
             "INSERT INTO FILES(sender, receiver, file_path) VALUES (?, ?, ?)",
             (username, receiver, filePath),
