@@ -11,6 +11,7 @@ from flask import (
 from werkzeug.utils import secure_filename
 import os
 import encryption as enc
+from database import Database
 
 
 app = Flask(__name__)
@@ -20,22 +21,14 @@ UPLOAD_FOLDER = "uploads"
 ALLOWED_EXTENSIONS = {"txt"}
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 
-
-connect = sqlite3.connect("database.db")
-connect.execute(
-    "CREATE TABLE IF NOT EXISTS USERS (username TEXT, password TEXT, public_key TEXT)"
-)
-connect.execute(
-    "CREATE TABLE IF NOT EXISTS FILES (sender TEXT, receiver TEXT, file_path TEXT, id INTEGER PRIMARY KEY AUTOINCREMENT)"
-)
-
+db = Database()
 
 ALLOWED_EXTENSIONS = {'txt'}
 app.config['UPLOAD_FOLDER'] = 'uploads'
 app.config['DOWNLOAD_FOLDER'] = 'downloads'
 
 # Function to check if the file extension is allowed
-def allowed_file(filename):
+def allowed_file_type(filename):
     return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
@@ -52,13 +45,7 @@ def create():
         username = request.form["username"]
         password = request.form["password"]
         public_key = enc.generate_key()
-        with sqlite3.connect("database.db") as db:
-            cursor = db.cursor()
-            cursor.execute(
-                "INSERT INTO USERS(username, password, public_key) VALUES (?, ?, ?)",
-                (username, password, public_key),
-            )
-            db.commit()
+        db.createUser(username, password, public_key)
         return render_template("index.html")
 
     return render_template("createAccount.html")
@@ -77,7 +64,8 @@ def user():
 
 @app.route("/admin")
 def admin():
-    return render_template("admin.html")
+    users = db.getAllUsers()
+    return render_template("admin.html", users=users)
 
 
 # Route for file upload and processing
@@ -90,22 +78,13 @@ def upload_file():
     if file.filename == "":
         return jsonify({"error": "No selected file"})
 
-    if file and allowed_file(file.filename):
-        connect = sqlite3.connect("database.db")
-        cursor = connect.cursor()
-        cursor.execute('SELECT password FROM USERS WHERE username = "test1"')
-        row = cursor.fetchone()
-        password = row[0]
+    if file and allowed_file_type(file.filename):
+        password = db.getPassword("test1")
         filename = secure_filename(file.filename)
         receiver = request.form["select"]
         username = "test"
         filePath = os.path.join(app.config["UPLOAD_FOLDER"], filename)
-
-        cursor.execute(
-            "INSERT INTO FILES(sender, receiver, file_path) VALUES (?, ?, ?)",
-            (username, receiver, filePath),
-        )
-        connect.commit()
+        db.insertFile(username, receiver, filePath)
         file.save(filePath)
         enc.process_file(filename, password, app)
 

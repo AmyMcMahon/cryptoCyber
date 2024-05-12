@@ -3,6 +3,10 @@
         rel="stylesheet"
         href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.indigo.min.css"
     />
+    <link
+  rel="stylesheet"
+  href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.colors.min.css"
+/>
     <body>
         <main class="container-fluid">
             <div class="grid">
@@ -25,6 +29,29 @@
               </tr>
             </tbody>
           </table>
+          <article class="pico-background-red-600">
+          <h2>
+            All Users - DEV ONLY, GET RID OF LTR
+          </h2>
+          <table>
+            <thead>
+              <tr>
+                <th scope="col">User</th>
+                <th scope="col">Password</th>
+                <th scope="col">Public Key</th>
+              </tr>
+            </thead>
+            <tbody>
+              {%for user, password, key in users%} 
+                <tr>
+                  <td>{{user}}</td>
+                  <td>{{password}}</td>
+                  <td>{{key}}</td>
+                </tr> 
+              {%endfor%} 
+            </tbody>
+          </table>
+        </article>
         </main>
     </body>
 </html>

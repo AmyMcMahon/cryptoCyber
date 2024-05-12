@@ -3,6 +3,10 @@
   rel="stylesheet"
   href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.indigo.min.css"
 />
+<link
+  rel="stylesheet"
+  href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.colors.min.css"
+/>
 <body>
     <main class="container">
         <h1> Login </h1>
@@ -34,12 +38,16 @@
             />
           </form>
 
-          <button>
-            <a href="/admin">Admin</a>
-          </button>
-          <button>
-            <a href="/user">User</a>
-          </button>
+          <article class="pico-background-red-600">
+            <h2>DEV ONLY, GET RID OF LTR</h2>
+            <div role="group">
+              <a href="/admin"><button>Admin</button></a>
+              <a href="/user"><button>User</button></a>
+              <a href="/createAccount"><button>Sign Up</button></a>
+              <a href="/login"><button>log in as ____</button></a>
+            </div>
+
+          </article>
       </main>
     
 
