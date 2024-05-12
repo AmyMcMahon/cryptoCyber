@@ -12,7 +12,6 @@ class Database():
         self.cursor = self.connect.cursor()
 
     def createUser(self, username, password, public_key):
-
         self.cursor.execute(
             "INSERT INTO USERS(username, password, public_key) VALUES (?, ?, ?)",
             (username, password, public_key),
@@ -35,9 +34,10 @@ class Database():
 
     #for debug, get rid of ltr
     def getAllUsersAdmin(self):
-        self.cursor.execute("SELECT username, password,public_key FROM USERS")
+        self.cursor.execute("SELECT username, password, public_key FROM USERS")
         rows = self.cursor.fetchall()
         return rows
+
     
     def getAllUsers(self):
         self.cursor.execute("SELECT username FROM USERS")

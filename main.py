@@ -10,8 +10,8 @@ from flask import (
 )
 from werkzeug.utils import secure_filename
 import os
-import encryption as enc
-from database import Database
+import modules.encryption as enc
+from modules.database import Database
 
 
 app = Flask(__name__)
@@ -59,12 +59,19 @@ def user():
     files = db.getUsersFiles(user)
     users = db.getAllUsers()
     return render_template('user.html', files=files, users=users)
+    #aes_files = [file for file in os.listdir(app.config['UPLOAD_FOLDER']) if file.endswith('.aes')]
+    user = "test" #change me ltr
+    files = db.getUsersFiles(user)
+    users = db.getAllUsers()
+    return render_template('user.html', files=files, users=users)
 
 
 @app.route("/admin")
 def admin():
     users = db.getAllUsersAdmin()
     files = db.getAllFilesAdmin()
+    print(users)
+    #error cause password not in db???
     return render_template("admin.html", users=users, files = files)
 
 
