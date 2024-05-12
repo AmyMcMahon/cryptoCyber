@@ -7,9 +7,9 @@ import encryption as enc
 app = Flask(__name__)
 
 # Configure upload folder and allowed file extensions
-UPLOAD_FOLDER = 'uploads'
 ALLOWED_EXTENSIONS = {'txt'}
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+app.config['UPLOAD_FOLDER'] = 'uploads'
+app.config['DOWNLOAD_FOLDER'] = 'downloads'
 
 # Function to check if the file extension is allowed
 def allowed_file(filename):
@@ -23,8 +23,8 @@ def index():
 # Route for user page
 @app.route("/user")
 def user():
-    files = os.listdir(UPLOAD_FOLDER)
-    return render_template('user.html', files=files)
+    aes_files = [file for file in os.listdir(app.config['UPLOAD_FOLDER']) if file.endswith('.aes')]
+    return render_template('user.html', files=aes_files)
 
 @app.route("/admin")
 def admin():
@@ -45,29 +45,44 @@ def upload_file():
         filename = secure_filename(file.filename)
         file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
         enc.process_file(filename, password, app)
-        return redirect(url_for('user'))  # Redirect to user page
+        return redirect(url_for('user')) # Redirect to user page
     else:
         return jsonify({'error': 'File type not allowed'})
 
-@app.route("/download/<filename>")
-def download(filename):
-    password = 'password'  # Hardcoded password
-    decrypted_filename = filename.replace('.aes', '')
-    decrypted_file_path = os.path.join(app.config['UPLOAD_FOLDER'], decrypted_filename)
+# @app.route("/download/<filename>")
+# def download(filename):
+#     password = 'password'  # Hardcoded password
+#     decrypted_filename = filename.replace('.aes', '')
+#     decrypted_file_path = os.path.join(app.config['UPLOAD_FOLDER'], decrypted_filename)
+    
+#     # Decrypt the file
+#     enc.decrypt_file(filename, decrypted_filename, password)
+    
+#     # Authenticate the file
+#     if enc.authenticate_file(decrypted_file_path):
+#         return send_file(decrypted_file_path, as_attachment=True)
+#     else:
+#         return jsonify({'error': 'File authentication failed'})
+
+# Function to decrypt a file, verify its signature, and download it
+@app.route('/decrypt_and_download/<filename>')
+def decrypt_and_download(filename):
+    password = 'password'
     
     # Decrypt the file
-    enc.decrypt_file(filename, decrypted_filename, password)
+    decrypted_filename = filename.replace('.aes', '') 
+    enc.decrypt_file(filename, decrypted_filename, password, app)
     
-    # Authenticate the file
-    if enc.authenticate_file(decrypted_file_path):
-        return send_file(decrypted_file_path, as_attachment=True)
+    if enc.verify_signature(decrypted_filename, app):
+        send_file(os.path.join(app.config['DOWNLOAD_FOLDER'], decrypted_filename),
+                         as_attachment=True)
+        return redirect(url_for('user'))
     else:
-        return jsonify({'error': 'File authentication failed'})
+        return "Signature verification failed."
 
-# # Route for downloading processed files
-# @app.route('/download/<filename>')
-# def download_file(filename):
-#     return send_file(os.path.join(app.config['UPLOAD_FOLDER'], filename), as_attachment=True)
+if __name__ == '__main__':
+    app.run(debug=True)
+
 
 if __name__ == '__main__':
     app.run()
