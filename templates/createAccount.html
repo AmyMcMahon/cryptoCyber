@@ -5,16 +5,16 @@
 />
 <body>
     <main class="container">
-        <h1> Create An Account </h1>
-        <form>
+        <h1> Create an Account </h1>
+        <form action="/createAccount" method="POST" enctype="multipart/form-data">
             <fieldset>
                 <label>
-                username
+                Username
                 <input
                   type="text"
                   name="username"
                   placeholder="Username"
-                  autocomplete="usernames"
+                  autocomplete="Username"
                 />
                 </label>
                 <label>
@@ -23,24 +23,11 @@
                   type="password"
                   name="password"
                   placeholder="Password"
-                  autocomplete="current-password"
+                  autocomplete="Password"
                 />
                 </label>
-                <label>
-                    Public Key
-                    <input
-                      type="text"
-                      name="publicKey"
-                      placeholder="Public Key"
-                      autocomplete="publicKey"
-                    />
-                </label>
+                <button type="submit" class="btn btn-dark btn-sm">Sign Up</button>
             </fieldset>
-          
-            <input
-              type="submit"
-              value="Log In"
-            />
           </form>
 
           <button>

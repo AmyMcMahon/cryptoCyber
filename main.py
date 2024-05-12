@@ -1,3 +1,4 @@
+import sqlite3
 from flask import Flask, render_template, request, jsonify, send_file, redirect, url_for
 from werkzeug.utils import secure_filename
 import os
@@ -11,6 +12,14 @@ UPLOAD_FOLDER = "uploads"
 ALLOWED_EXTENSIONS = {"txt"}
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 
+connect = sqlite3.connect("database.db")
+connect.execute(
+    "CREATE TABLE IF NOT EXISTS USERS (username TEXT, password TEXT, public_key TEXT)"
+)
+connect.execute(
+    "CREATE TABLE IF NOT EXISTS FILES (sender TEXT, receiver TEXT, file_path TEXT, id INTEGER PRIMARY KEY AUTOINCREMENT)"
+)
+
 
 # Function to check if the file extension is allowed
 def allowed_file(filename):
@@ -21,6 +30,25 @@ def allowed_file(filename):
 @app.route("/")
 def index():
     return render_template("index.html")
+
+
+# Route for create account page
+@app.route("/createAccount", methods=["POST", "GET"])
+def create():
+    if request.method == "POST":
+        username = request.form["username"]
+        password = request.form["password"]
+        public_key = enc.generate_key()
+        with sqlite3.connect("database.db") as db:
+            cursor = db.cursor()
+            cursor.execute(
+                "INSERT INTO USERS(username, password, public_key) VALUES (?, ?, ?)",
+                (username, password, public_key),
+            )
+            db.commit()
+        return render_template("index.html")
+
+    return render_template("createAccount.html")
 
 
 # Route for user page
@@ -46,8 +74,14 @@ def upload_file():
         return jsonify({"error": "No selected file"})
 
     if file and allowed_file(file.filename):
-        password = "password"  # Hardcoded password
+        connect = sqlite3.connect("database.db")
+        cursor = connect.cursor()
+        cursor.execute('SELECT password FROM USERS WHERE username = "test"')
+        password = cursor.fetchall()
         filename = secure_filename(file.filename)
+        receiver = request.form["select"]
+        print(receiver, password, filename)
+
         file.save(os.path.join(app.config["UPLOAD_FOLDER"], filename))
         enc.process_file(filename, password, app)
         return redirect(url_for("user"))  # Redirect to user page
@@ -62,7 +96,7 @@ def download(filename):
     decrypted_file_path = os.path.join(app.config["UPLOAD_FOLDER"], decrypted_filename)
 
     # Decrypt the file
-    enc.decrypt_file(filename, decrypted_filename, password)
+    enc.decrypt_file(filename, decrypted_filename, password, app)
 
     # Authenticate the file
     if enc.authenticate_file(decrypted_file_path):
