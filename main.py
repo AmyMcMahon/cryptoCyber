@@ -10,8 +10,8 @@ from flask import (
 )
 from werkzeug.utils import secure_filename
 import os
-import encryption as enc
-from database import Database
+import modules.encryption as enc
+from modules.database import Database
 
 
 app = Flask(__name__)
@@ -65,6 +65,8 @@ def user():
 @app.route("/admin")
 def admin():
     users = db.getAllUsers()
+    print(users)
+    #error cause password not in db???
     return render_template("admin.html", users=users)
 
 
