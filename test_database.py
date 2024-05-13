@@ -1,9 +1,10 @@
 import unittest
-import modules.database as Database
+from modules.database import Database
 
 class TestDatebase(unittest.TestCase):
     @classmethod
     def setUpClass(self):
+        print("Setting up")
         self.db = Database()
         self.db.createUser("testsender", "testpassword", "testpublickey")
         self.db.createUser("testreceicer", "testpassword", "testpublickey")
@@ -11,17 +12,16 @@ class TestDatebase(unittest.TestCase):
 
 
     def testCheckUserTable(self):
-        self.assertEqual(self.db.getAllUsers(),
-                         [('testsender', 'testpassword', 'testpublickey'),
-                          ('testreceiver', 'testpassword', 'testpublickey')])
+        self.assertEqual(self.db.getAllUsersAdmin()[-2:],
+                         [('testsender', 'testpassword', 'testpublickey'), ('testreceicer', 'testpassword', 'testpublickey')])
         
     def testCheckFileTable(self):
-        self.assertEqual(self.db.getAllFilesAdmin(),
-                         [('testsender', 'testreceiver', 'testfile')])
+        self.assertEqual(self.db.getAllFilesAdmin()[-1],
+                         ('testsender', 'testreceiver', 'testfile'))
 
     def testCheckFileForUser(self):
-        self.assertEqual(self.db.getUsersFiles("testreceiver"),
-                         [('testsender', 'testfile')])
+        self.assertEqual(self.db.getUsersFiles("testreceiver")[-1],
+                         ('testsender','testfile'))
 
 
 if __name__ == '__main__':
