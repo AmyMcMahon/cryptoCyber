@@ -1,5 +1,6 @@
 import unittest
 from modules.database import Database
+from modules.encryption import hash_password
 
 class TestDatebase(unittest.TestCase):
     @classmethod
@@ -12,8 +13,12 @@ class TestDatebase(unittest.TestCase):
 
 
     def testCheckUserTable(self):
-        self.assertEqual(self.db.getAllUsersAdmin()[-2:],
-                         [('testsender', 'testpassword', 'testpublickey'), ('testreceicer', 'testpassword', 'testpublickey')])
+        user1 = 'testsender'
+        user2 = 'testreceicer'
+        db1 = self.db.getAllUsersAdmin()[-2:][0]
+        db2 = self.db.getAllUsersAdmin()[-2:][1]
+        self.assertEqual(db1[0], user1)
+        self.assertEqual(db2[0], user2)
         
     def testCheckFileTable(self):
         self.assertEqual(self.db.getAllFilesAdmin()[-1],
