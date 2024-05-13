@@ -19,7 +19,6 @@ class Database():
         self.connect.commit()
 
     def getPassword(self, username):
-
         self.cursor.execute('SELECT password FROM USERS WHERE username = "' + username + '"')
         row = self.cursor.fetchone()
         return row[0]
@@ -37,7 +36,6 @@ class Database():
         self.cursor.execute("SELECT username, password, public_key FROM USERS")
         rows = self.cursor.fetchall()
         return rows
-
     
     def getAllUsers(self):
         self.cursor.execute("SELECT username FROM USERS")
@@ -45,7 +43,7 @@ class Database():
         return rows
 
     def getUsersFiles(self, username):
-        self.cursor.execute('SELECT sender, file_path FROM FILES WHERE sender = "' + username + '"')
+        self.cursor.execute('SELECT sender, file_path FROM FILES WHERE receiver = "' + username + '"')
         rows = self.cursor.fetchall()
         clean_rows = []
         for sender, file_path in rows:
