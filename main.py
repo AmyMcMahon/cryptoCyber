@@ -102,34 +102,13 @@ def upload_file():
         return jsonify({"error": "File type not allowed"})
 
 
-
-@app.route("/download/<filename>")
-def download(filename):
-    password = "password"  # Hardcoded password
-    decrypted_filename = filename.replace(".aes", "")
-    decrypted_file_path = os.path.join(app.config["UPLOAD_FOLDER"], decrypted_filename)
-
-    # Decrypt the file
-    enc.decrypt_file(filename, decrypted_filename, password, app)
-
-    # Authenticate the file
-    if enc.authenticate_file(decrypted_file_path):
-        return send_file(decrypted_file_path, as_attachment=True)
-    else:
-        return jsonify({"error": "File authentication failed"})
-
-
-# Function to decrypt a file, verify its signature, and download it
-@app.route('/decrypt_and_download/<filename>')
+@app.route('/download/<filename>')
 def decrypt_and_download(filename):
     password = 'password'
-    
-    # Decrypt the file
     decrypted_filename = filename.replace('.aes', '') 
     enc.decrypt_file(filename, decrypted_filename, password, app)
-    
     if enc.verify_signature(decrypted_filename, app):
-        send_file(os.path.join(app.config['DOWNLOAD_FOLDER'], decrypted_filename),
+        send_file(os.path.join(app.config['UPLOAD_FOLDER'], decrypted_filename),
                          as_attachment=True)
         return redirect(url_for('user'))
     else:
