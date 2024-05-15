@@ -6,15 +6,13 @@ import bcrypt
 
 def generate_key():
     public_key, private_key = rsa.newkeys(2048)
-    pub_key_str = public_key.save_pkcs1().decode("utf-8")
-    pub_key_str = pub_key_str.replace("-----BEGIN RSA PUBLIC KEY-----", "")
-    pub_key_str = pub_key_str.replace("-----END RSA PUBLIC KEY-----", "")
-    pub_key_str = pub_key_str.strip()
+    pub_key_str = public_key.save_pkcs1()
+    private_key_str = private_key.save_pkcs1()
     with open("private_key.pem", "wb") as f:
         f.write(private_key.save_pkcs1())
     with open("public_key.pem", "wb") as f:
         f.write(public_key.save_pkcs1())
-    return pub_key_str
+    return pub_key_str, private_key_str
 
 
 def hash_password(password):
