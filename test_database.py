@@ -9,7 +9,7 @@ class TestDatebase(unittest.TestCase):
         self.db = Database()
         self.db.createUser("testsender", "testpassword", "testpublickey")
         self.db.createUser("testreceicer", "testpassword", "testpublickey")
-        self.db.insertFile("testsender", "testreceiver", "testfile")
+        self.db.insertFile("testsender", "testreceiver", "testfile", "testsymmetrickey")
 
 
     def testCheckUserTable(self):
@@ -28,6 +28,14 @@ class TestDatebase(unittest.TestCase):
         self.assertEqual(self.db.getUsersFiles("testreceiver")[-1],
                          ('testsender','testfile'))
 
+    def tearDown(self):
+        print("Tearing down")
+        self.db.cursor.execute("DELETE FROM USERS WHERE username = 'testsender'")
+        self.db.cursor.execute("DELETE FROM USERS WHERE username = 'testreceiver'")
+        self.db.cursor.execute("DELETE FROM FILES WHERE sender = 'testsender'")
+        self.db.cursor.execute("DELETE FROM FILES WHERE receiver = 'testreceiver'")
+        self.db.connect.commit()
+        self.db.connect.close()
 
 if __name__ == '__main__':
     unittest.main()

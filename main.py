@@ -51,15 +51,9 @@ def create():
 
     return render_template("createAccount.html")
 
-
 # Route for user page
 @app.route("/user")
 def user():
-    #aes_files = [file for file in os.listdir(app.config['UPLOAD_FOLDER']) if file.endswith('.aes')]
-    user = "test" #change me ltr
-    files = db.getUsersFiles(user)
-    users = db.getAllUsers()
-    return render_template('user.html', files=files, users=users)
     #aes_files = [file for file in os.listdir(app.config['UPLOAD_FOLDER']) if file.endswith('.aes')]
     user = "test" #change me ltr
     files = db.getUsersFiles(user)
