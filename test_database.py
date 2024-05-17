@@ -17,6 +17,7 @@ class TestDatebase(unittest.TestCase):
         user2 = 'testreceicer'
         db1 = self.db.getAllUsersAdmin()[-2:][0]
         db2 = self.db.getAllUsersAdmin()[-2:][1]
+        print(db1, db2)
         self.assertEqual(db1[0], user1)
         self.assertEqual(db2[0], user2)
         
@@ -28,14 +29,14 @@ class TestDatebase(unittest.TestCase):
         self.assertEqual(self.db.getUsersFiles("testreceiver")[-1],
                          ('testsender','testfile'))
 
-    def tearDown(self):
+    @classmethod
+    def tearDownClass(self):
         print("Tearing down")
         self.db.cursor.execute("DELETE FROM USERS WHERE username = 'testsender'")
         self.db.cursor.execute("DELETE FROM USERS WHERE username = 'testreceiver'")
         self.db.cursor.execute("DELETE FROM FILES WHERE sender = 'testsender'")
         self.db.cursor.execute("DELETE FROM FILES WHERE receiver = 'testreceiver'")
         self.db.connect.commit()
-        self.db.connect.close()
 
 if __name__ == '__main__':
     unittest.main()
