@@ -10,15 +10,15 @@
 <body>
     <main class="container">
         <h1> Login </h1>
-        <form>
+        <form action="/" method="POST" enctype="multipart/form-data">
             <fieldset>
               <label>
                 Email
                 <input
-                  type="email"
-                  name="email"
-                  placeholder="Email"
-                  autocomplete="email"
+                  type="text"
+                  name="username"
+                  placeholder="Username"
+                  autocomplete="username"
                 />
               </label>
               <label>
@@ -31,11 +31,7 @@
                 />
               </label>
             </fieldset>
-          
-            <input
-              type="submit"
-              value="Log In"
-            />
+            <button type="submit" class="btn btn-dark btn-sm">Sign Up</button>
           </form>
 
           <article class="pico-background-red-600">

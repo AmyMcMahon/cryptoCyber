@@ -31,6 +31,7 @@ jobs:
         pip install pyAesCrypt
         pip install rsa
         pip install bcrypt
+        pip install flask_login
         
     - name: Test with unittest
       run: python3 -u -m unittest test_database.py

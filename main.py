@@ -9,6 +9,8 @@ from flask import (
     url_for,
 )
 from werkzeug.utils import secure_filename
+from flask_login import LoginManager, login_user
+from flask_session import Session
 import os
 import modules.encryption as enc
 from modules.database import Database
@@ -16,6 +18,7 @@ import rsa
 
 
 app = Flask(__name__)
+app.secret_key = "My Secret key"
 
 # Configure upload folder and allowed file extensions
 UPLOAD_FOLDER = "uploads"
@@ -23,19 +26,38 @@ ALLOWED_EXTENSIONS = {"txt"}
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 
 db = Database()
+login_manager = LoginManager()
+login_manager.init_app(app)
 
-ALLOWED_EXTENSIONS = {'txt'}
-app.config['UPLOAD_FOLDER'] = 'uploads'
-app.config['DOWNLOAD_FOLDER'] = 'downloads'
+ALLOWED_EXTENSIONS = {"txt"}
+app.config["UPLOAD_FOLDER"] = "uploads"
+app.config["DOWNLOAD_FOLDER"] = "downloads"
+
 
 # Function to check if the file extension is allowed
 def allowed_file_type(filename):
     return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
+@login_manager.user_loader
+def load_user(user_id):
+    print("loading user")
+    return db.getUserId(user_id)
+
+
 # Route for home page
-@app.route("/")
+@app.route("/", methods=["POST", "GET"])
 def index():
+    if request.method == "POST":
+        username = request.form["username"]
+        password = request.form["password"]
+        if db.check_Login(username, password):
+            userToLogin = db.getUser(username)
+            login_user(userToLogin)
+            return render_template("user.html")
+        else:
+            print("Login failed")
+            return render_template("index.html")
     return render_template("index.html")
 
 
@@ -54,8 +76,8 @@ def create():
 # Route for user page
 @app.route("/user")
 def user():
-    #aes_files = [file for file in os.listdir(app.config['UPLOAD_FOLDER']) if file.endswith('.aes')]
-    user = "test" #change me ltr
+    # aes_files = [file for file in os.listdir(app.config['UPLOAD_FOLDER']) if file.endswith('.aes')]
+    user = "test"  # change me ltr
     files = db.getUsersFiles(user)
     users = db.getAllUsers()
     return render_template('user.html', files=files, users=users)
@@ -66,8 +88,8 @@ def admin():
     users = db.getAllUsersAdmin()
     files = db.getAllFilesAdmin()
     print(users)
-    #error cause password not in db???
-    return render_template("admin.html", users=users, files = files)
+    # error cause password not in db???
+    return render_template("admin.html", users=users, files=files)
 
 
 @app.route("/upload", methods=["POST", "GET"])
@@ -98,18 +120,13 @@ def upload_file():
         filePath = os.path.join(app.config["UPLOAD_FOLDER"], filename)
         
         file.save(filePath)
-        
         db.insertFile(username, receiver, filePath, encrypted_symmetric_key)
-        
-        # Process file with AES key
-        enc.process_file(filename, encrypted_symmetric_key, app)
+        enc.process_file(filename, password, app)
 
-        return redirect(url_for('user'))
-
+        return redirect(url_for("user"))  # Redirect to user page
 
     else:
         return jsonify({"error": "File type not allowed"})
-
 
 @app.route('/download/<filename>')
 def decrypt_and_download(filename):
@@ -128,4 +145,5 @@ def decrypt_and_download(filename):
 
 
 if __name__ == "__main__":
+    app.secret_key = "super secret"
     app.run(port=8000)

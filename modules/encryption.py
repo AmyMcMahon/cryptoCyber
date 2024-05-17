@@ -2,6 +2,7 @@ import os
 import pyAesCrypt
 import rsa
 import bcrypt
+import modules.database as db
 
 
 def generate_key():
