@@ -9,7 +9,7 @@ from flask import (
     url_for,
 )
 from werkzeug.utils import secure_filename
-from flask_login import LoginManager, login_user
+from flask_login import LoginManager, login_user, login_required
 from flask_session import Session
 import os
 import modules.encryption as enc
@@ -52,7 +52,7 @@ def index():
         password = request.form["password"]
         if db.check_Login(username, password):
             userToLogin = db.getUser(username)
-            login_user(userToLogin)
+            login_user(userToLogin, remember=False)
             return render_template("user.html")
         else:
             print("Login failed")
@@ -75,6 +75,7 @@ def create():
 
 # Route for user page
 @app.route("/user")
+@login_required
 def user():
     # aes_files = [file for file in os.listdir(app.config['UPLOAD_FOLDER']) if file.endswith('.aes')]
     user = "test"  # change me ltr
@@ -89,6 +90,7 @@ def user():
 
 
 @app.route("/admin")
+@login_required
 def admin():
     users = db.getAllUsersAdmin()
     files = db.getAllFilesAdmin()
@@ -99,6 +101,7 @@ def admin():
 
 # Route for file upload and processing
 @app.route("/upload", methods=["POST", "GET"])
+@login_required
 def upload_file():
     if "file" not in request.files:
         return jsonify({"error": "No file part"})
@@ -125,6 +128,7 @@ def upload_file():
 
 
 @app.route("/download/<filename>")
+@login_required
 def download(filename):
     password = "password"  # Hardcoded password
     decrypted_filename = filename.replace(".aes", "")
@@ -142,6 +146,7 @@ def download(filename):
 
 # Function to decrypt a file, verify its signature, and download it
 @app.route("/decrypt_and_download/<filename>")
+@login_required
 def decrypt_and_download(filename):
     password = "password"
 

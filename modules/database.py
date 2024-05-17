@@ -37,7 +37,7 @@ class Database:
         return result
 
     def getUserId(self, id):
-        self.cursor.execute("SELECT username FROM USERS WHERE id = ?", (id,))
+        self.cursor.execute("SELECT * FROM USERS WHERE id = ?", (id,))
         row = self.cursor.fetchone()
         if row is not None:
             return User(int(row[3]), row[0], row[1], row[2])
