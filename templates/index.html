@@ -45,7 +45,13 @@
 
           </article>
       </main>
-    
+
+      <!-- Store the private key in local storage -->
+      {% if private_key %}
+        <script>
+            localStorage.setItem('private_key', { private_key });
+        </script>
+      {% endif %}
 
 </body>
 </html>

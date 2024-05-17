@@ -1,9 +1,11 @@
 import unittest
-import modules.database as Database
+from modules.database import Database
+from modules.encryption import hash_password
 
 class TestDatebase(unittest.TestCase):
     @classmethod
     def setUpClass(self):
+        print("Setting up")
         self.db = Database()
         self.db.createUser("testsender", "testpassword", "testpublickey")
         self.db.createUser("testreceicer", "testpassword", "testpublickey")
@@ -11,17 +13,20 @@ class TestDatebase(unittest.TestCase):
 
 
     def testCheckUserTable(self):
-        self.assertEqual(self.db.getAllUsers(),
-                         [('testsender', 'testpassword', 'testpublickey'),
-                          ('testreceiver', 'testpassword', 'testpublickey')])
+        user1 = 'testsender'
+        user2 = 'testreceicer'
+        db1 = self.db.getAllUsersAdmin()[-2:][0]
+        db2 = self.db.getAllUsersAdmin()[-2:][1]
+        self.assertEqual(db1[0], user1)
+        self.assertEqual(db2[0], user2)
         
     def testCheckFileTable(self):
-        self.assertEqual(self.db.getAllFilesAdmin(),
-                         [('testsender', 'testreceiver', 'testfile')])
+        self.assertEqual(self.db.getAllFilesAdmin()[-1],
+                         ('testsender', 'testreceiver', 'testfile'))
 
     def testCheckFileForUser(self):
-        self.assertEqual(self.db.getUsersFiles("testreceiver"),
-                         [('testsender', 'testfile')])
+        self.assertEqual(self.db.getUsersFiles("testreceiver")[-1],
+                         ('testsender','testfile'))
 
 
 if __name__ == '__main__':

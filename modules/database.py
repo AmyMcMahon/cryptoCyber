@@ -11,7 +11,7 @@ class Database:
             "CREATE TABLE IF NOT EXISTS USERS (username TEXT, password TEXT, public_key TEXT, id INTEGER PRIMARY KEY AUTOINCREMENT)"
         )
         self.connect.execute(
-            "CREATE TABLE IF NOT EXISTS FILES (sender TEXT, receiver TEXT, file_path TEXT, id INTEGER PRIMARY KEY AUTOINCREMENT)"
+            "CREATE TABLE IF NOT EXISTS FILES (sender TEXT, receiver TEXT, file_path TEXT, id INTEGER PRIMARY KEY AUTOINCREMENT, symmetric_key TEXT)"
         )
         self.cursor = self.connect.cursor()
 
@@ -23,6 +23,20 @@ class Database:
         )
         self.connect.commit()
 
+    def getPublicKey(self, username):
+        self.cursor.execute(
+            'SELECT public_key FROM USERS WHERE username = "' + username + '"'
+        )
+        row = self.cursor.fetchone()
+        return row[0]
+    
+    def getSymmetricKey(self, username):
+        self.cursor.execute(
+            'SELECT symmetric_key FROM USERS WHERE username = "' + username + '"'
+        )
+        row = self.cursor.fetchone()
+        return row[0]
+    
     def getPassword(self, username):
         self.cursor.execute(
             'SELECT password FROM USERS WHERE username = "' + username + '"'
@@ -52,11 +66,10 @@ class Database:
         else:
             return None
 
-    def insertFile(self, sender, receiver, file_path):
-
+    def insertFile(self, sender, receiver, file_path, symmetric_key):
         self.cursor.execute(
-            "INSERT INTO FILES(sender, receiver, file_path) VALUES (?, ?, ?)",
-            (sender, receiver, file_path),
+            "INSERT INTO FILES(sender, receiver, file_path, symmetric_key) VALUES (?, ?, ?)",
+            (sender, receiver, file_path, symmetric_key),
         )
         self.connect.commit()
 
@@ -72,9 +85,7 @@ class Database:
         return rows
 
     def getUsersFiles(self, username):
-        self.cursor.execute(
-            'SELECT sender, file_path FROM FILES WHERE sender = "' + username + '"'
-        )
+        self.cursor.execute('SELECT sender, file_path FROM FILES WHERE receiver = "' + username + '"')
         rows = self.cursor.fetchall()
         clean_rows = []
         for sender, file_path in rows:

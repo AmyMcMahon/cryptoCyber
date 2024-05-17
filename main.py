@@ -14,6 +14,7 @@ from flask_session import Session
 import os
 import modules.encryption as enc
 from modules.database import Database
+import rsa
 
 
 app = Flask(__name__)
@@ -66,9 +67,9 @@ def create():
     if request.method == "POST":
         username = request.form["username"]
         password = request.form["password"]
-        public_key = enc.generate_key()
+        public_key, private_key = enc.generate_key()
         db.createUser(username, password, public_key)
-        return render_template("index.html")
+        return render_template("index.html", private_key=private_key)
 
     return render_template("createAccount.html")
 
@@ -97,7 +98,6 @@ def admin():
     return render_template("admin.html", users=users, files=files)
 
 
-# Route for file upload and processing
 @app.route("/upload", methods=["POST", "GET"])
 def upload_file():
     if "file" not in request.files:
@@ -108,14 +108,25 @@ def upload_file():
         return jsonify({"error": "No selected file"})
 
     if file and allowed_file_type(file.filename):
-        # password = db.getPassword("test1")
-        password = "password"  # Hardcoded password, to be changed to above??
-        filename = secure_filename(file.filename)
-        receiver = request.form["select"]
         username = "test"
+        receiver = request.form["select"]
+        
+        receiver_public_key_str = db.getPublicKey(receiver)
+        if not receiver_public_key_str:
+            return jsonify({"error": "Receiver's public key not found"})
+        
+        receiver_public_key = rsa.PublicKey.load_pkcs1(receiver_public_key_str)
+        
+        symmetric_key = rsa.randnum.read_random_bits(256)
+
+        # Encrypt the symmetric key with receiver's public key
+        encrypted_symmetric_key = rsa.encrypt(symmetric_key, receiver_public_key)
+        
+        filename = secure_filename(file.filename)
         filePath = os.path.join(app.config["UPLOAD_FOLDER"], filename)
-        db.insertFile(username, receiver, filePath)
+        
         file.save(filePath)
+        db.insertFile(username, receiver, filePath, encrypted_symmetric_key)
         enc.process_file(filename, password, app)
 
         return redirect(url_for("user"))  # Redirect to user page
@@ -123,38 +134,18 @@ def upload_file():
     else:
         return jsonify({"error": "File type not allowed"})
 
-
-@app.route("/download/<filename>")
-def download(filename):
-    password = "password"  # Hardcoded password
-    decrypted_filename = filename.replace(".aes", "")
-    decrypted_file_path = os.path.join(app.config["UPLOAD_FOLDER"], decrypted_filename)
-
-    # Decrypt the file
-    enc.decrypt_file(filename, decrypted_filename, password, app)
-
-    # Authenticate the file
-    if enc.authenticate_file(decrypted_file_path):
-        return send_file(decrypted_file_path, as_attachment=True)
-    else:
-        return jsonify({"error": "File authentication failed"})
-
-
-# Function to decrypt a file, verify its signature, and download it
-@app.route("/decrypt_and_download/<filename>")
+@app.route('/download/<filename>')
 def decrypt_and_download(filename):
-    password = "password"
-
-    # Decrypt the file
-    decrypted_filename = filename.replace(".aes", "")
-    enc.decrypt_file(filename, decrypted_filename, password, app)
-
+    user = request.args.get('user')
+    private_key = request.args.get('private_key')
+    symmetric_key = db.getSymmetricKey(user)
+    decrypted_symmetric_key = rsa.decrypt(symmetric_key, rsa.PrivateKey.load_pkcs1(private_key.encode()))
+    decrypted_filename = filename.replace('.aes', '') 
+    enc.decrypt_file(filename, decrypted_filename, decrypted_symmetric_key, app)
     if enc.verify_signature(decrypted_filename, app):
-        send_file(
-            os.path.join(app.config["DOWNLOAD_FOLDER"], decrypted_filename),
-            as_attachment=True,
-        )
-        return redirect(url_for("user"))
+        send_file(os.path.join(app.config['UPLOAD_FOLDER'], decrypted_filename),
+                         as_attachment=True)
+        return redirect(url_for('user'))
     else:
         return "Signature verification failed."
 
