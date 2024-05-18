@@ -9,7 +9,7 @@ from flask import (
     url_for,
 )
 from werkzeug.utils import secure_filename
-from flask_login import LoginManager, login_user, login_required
+from flask_login import LoginManager, login_user, login_required, current_user
 from flask_session import Session
 import os
 import modules.encryption as enc
@@ -18,7 +18,7 @@ import rsa
 
 
 app = Flask(__name__)
-app.secret_key = "My Secret key"
+app.secret_key = "My Secret key"  # Change this to a random string later
 
 # Configure upload folder and allowed file extensions
 UPLOAD_FOLDER = "uploads"
@@ -73,15 +73,16 @@ def create():
 
     return render_template("createAccount.html")
 
+
 # Route for user page
 @app.route("/user")
 @login_required
 def user():
     # aes_files = [file for file in os.listdir(app.config['UPLOAD_FOLDER']) if file.endswith('.aes')]
-    user = "test"  # change me ltr
+    user = current_user.username
     files = db.getUsersFiles(user)
     users = db.getAllUsers()
-    return render_template('user.html', files=files, users=users)
+    return render_template("user.html", files=files, users=users)
 
 
 @app.route("/admin")
@@ -105,68 +106,51 @@ def upload_file():
         return jsonify({"error": "No selected file"})
 
     if file and allowed_file_type(file.filename):
-        username = "test"
+        username = current_user.username
         receiver = request.form["select"]
-        
+
         receiver_public_key_str = db.getPublicKey(receiver)
         if not receiver_public_key_str:
             return jsonify({"error": "Receiver's public key not found"})
-        
+
         receiver_public_key = rsa.PublicKey.load_pkcs1(receiver_public_key_str)
-        
+
         symmetric_key = rsa.randnum.read_random_bits(256)
 
         # Encrypt the symmetric key with receiver's public key
         encrypted_symmetric_key = rsa.encrypt(symmetric_key, receiver_public_key)
-        
+
         filename = secure_filename(file.filename)
         filePath = os.path.join(app.config["UPLOAD_FOLDER"], filename)
-        
+
         file.save(filePath)
         db.insertFile(username, receiver, filePath, encrypted_symmetric_key)
-        enc.process_file(filename, password, app)
+        enc.process_file(
+            filename, password, app
+        )  # what is this password supposed to be ???
 
         return redirect(url_for("user"))  # Redirect to user page
 
     else:
         return jsonify({"error": "File type not allowed"})
 
-<<<<<<< HEAD
 
 @app.route("/download/<filename>")
-@login_required
-def download(filename):
-    password = "password"  # Hardcoded password
-    decrypted_filename = filename.replace(".aes", "")
-    decrypted_file_path = os.path.join(app.config["UPLOAD_FOLDER"], decrypted_filename)
-
-    # Decrypt the file
-    enc.decrypt_file(filename, decrypted_filename, password, app)
-
-    # Authenticate the file
-    if enc.authenticate_file(decrypted_file_path):
-        return send_file(decrypted_file_path, as_attachment=True)
-    else:
-        return jsonify({"error": "File authentication failed"})
-
-
-# Function to decrypt a file, verify its signature, and download it
-@app.route("/decrypt_and_download/<filename>")
-@login_required
-=======
-@app.route('/download/<filename>')
->>>>>>> 2a774b8080c01d2208a2e3c9c788386f13f2ec2f
 def decrypt_and_download(filename):
-    user = request.args.get('user')
-    private_key = request.args.get('private_key')
+    user = request.args.get("user")
+    private_key = request.args.get("private_key")
     symmetric_key = db.getSymmetricKey(user)
-    decrypted_symmetric_key = rsa.decrypt(symmetric_key, rsa.PrivateKey.load_pkcs1(private_key.encode()))
-    decrypted_filename = filename.replace('.aes', '') 
+    decrypted_symmetric_key = rsa.decrypt(
+        symmetric_key, rsa.PrivateKey.load_pkcs1(private_key.encode())
+    )
+    decrypted_filename = filename.replace(".aes", "")
     enc.decrypt_file(filename, decrypted_filename, decrypted_symmetric_key, app)
     if enc.verify_signature(decrypted_filename, app):
-        send_file(os.path.join(app.config['UPLOAD_FOLDER'], decrypted_filename),
-                         as_attachment=True)
-        return redirect(url_for('user'))
+        send_file(
+            os.path.join(app.config["UPLOAD_FOLDER"], decrypted_filename),
+            as_attachment=True,
+        )
+        return redirect(url_for("user"))
     else:
         return "Signature verification failed."
 
