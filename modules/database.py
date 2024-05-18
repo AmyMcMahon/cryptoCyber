@@ -31,6 +31,7 @@ class Database:
         return row[0]
     
     def getSymmetricKey(self, username):
+        return "idk what u want mark"
         self.cursor.execute(
             'SELECT symmetric_key FROM USERS WHERE username = "' + username + '"'
         )
@@ -68,7 +69,7 @@ class Database:
 
     def insertFile(self, sender, receiver, file_path, symmetric_key):
         self.cursor.execute(
-            "INSERT INTO FILES(sender, receiver, file_path, symmetric_key) VALUES (?, ?, ?)",
+            "INSERT INTO FILES(sender, receiver, file_path, symmetric_key) VALUES (?, ?, ?, ?)",
             (sender, receiver, file_path, symmetric_key),
         )
         self.connect.commit()
