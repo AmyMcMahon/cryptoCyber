@@ -7,13 +7,13 @@ import modules.database as db
 
 def generate_key():
     public_key, private_key = rsa.newkeys(2048)
-    pub_key_str = public_key.save_pkcs1().decode("utf-8")
-    pub_key_str = pub_key_str.replace("-----BEGIN RSA PUBLIC KEY-----", "")
-    pub_key_str = pub_key_str.replace("-----END RSA PUBLIC KEY-----", "")
-    pub_key_str = pub_key_str.strip()
+    pub_key_str = public_key.save_pkcs1()
+    private_key_str = private_key.save_pkcs1()
     with open("private_key.pem", "wb") as f:
         f.write(private_key.save_pkcs1())
-    return pub_key_str
+    with open("public_key.pem", "wb") as f:
+        f.write(public_key.save_pkcs1())
+    return pub_key_str, private_key_str
 
 
 def hash_password(password):
@@ -28,7 +28,7 @@ def process_file(filename, password, app):
     encrypt_file(filename, password, app)
 
     # Sender side Integrity
-    sign_file(filename, password, app)
+    sign_file(filename, app)
 
     # Remove the original text file
     os.remove(os.path.join(app.config["UPLOAD_FOLDER"], filename))
@@ -45,11 +45,10 @@ def encrypt_file(filename, password, app):
 
 
 # Function to sign a file with private key
-def sign_file(filename, password, app):
+def sign_file(filename, app):
     with open(os.path.join(app.config["UPLOAD_FOLDER"], filename), "rb") as f:
         content = f.read()
 
-    # Load private key
     with open("private_key.pem", "rb") as f:
         private_key_data = f.read()
     priv_key = rsa.PrivateKey.load_pkcs1(private_key_data)
@@ -66,23 +65,14 @@ def sign_file(filename, password, app):
 def verify_signature(filename, app):
     with open(os.path.join(app.config["UPLOAD_FOLDER"], filename), "rb") as f:
         content = f.read()
-
-    # Load public key
     with open("public_key.pem", "rb") as f:
         public_key_data = f.read()
     pub_key = rsa.PublicKey.load_pkcs1(public_key_data)
-
-    # Load signature
     with open(os.path.join(app.config["UPLOAD_FOLDER"], filename + ".sig"), "rb") as f:
         signature = f.read()
-
-    # Verify the signature
-    try:
-        rsa.verify(content, signature, pub_key)
-        return True
-    except rsa.VerificationError:
-        return False
-
+    print(content, signature, pub_key)
+    return rsa.verify(content, signature, pub_key)
+    
 
 # Function to decrypt a file
 def decrypt_file(filename, decrypted_filename, password, app):
