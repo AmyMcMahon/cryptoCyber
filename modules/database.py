@@ -43,10 +43,14 @@ class Database:
             'SELECT password FROM USERS WHERE username = "' + username + '"'
         )
         row = self.cursor.fetchone()
+        if row is None:
+            return None
         return row[0]
 
     def check_Login(self, username, password):
         pass_hash = self.getPassword(username)
+        if pass_hash is None:
+            return False
         userPass = password.encode("utf-8")
         result = bcrypt.checkpw(userPass, pass_hash)
         return result
