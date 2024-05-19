@@ -80,7 +80,9 @@ def create():
         password = request.form["password"]
         public_key, private_key = enc.generate_key()
         db.createUser(username, password, public_key)
-        return render_template("index.html", private_key=private_key)
+        return render_template(
+            "index.html", private_key=private_key
+        )  # why are we sending the private key here ??
 
     return render_template("createAccount.html")
 
