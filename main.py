@@ -9,7 +9,13 @@ from flask import (
     url_for,
 )
 from werkzeug.utils import secure_filename
-from flask_login import LoginManager, login_user, login_required, current_user
+from flask_login import (
+    LoginManager,
+    login_user,
+    login_required,
+    current_user,
+    logout_user,
+)
 from flask_session import Session
 import os
 import modules.encryption as enc
@@ -54,11 +60,18 @@ def index():
         if db.check_Login(username, password):
             userToLogin = db.getUser(username)
             login_user(userToLogin, remember=False)
-            return render_template("user.html")
+            return redirect(url_for("user"))
         else:
             print("Login failed")
-            return render_template("index.html")
+            return redirect(url_for("index"))
     return render_template("index.html")
+
+
+@app.route("/logout")
+@login_required
+def logout():
+    logout_user()
+    return redirect(url_for("index"))
 
 
 # Route for create account page
