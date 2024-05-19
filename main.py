@@ -139,7 +139,7 @@ def upload_file():
         file.save(filePath)
         db.insertFile(username, receiver, filePath, encrypted_symmetric_key)
         enc.process_file(
-            filename, password, app
+            filename, symmetric_key, app
         )  # what is this password supposed to be ???
 
         return redirect(url_for("user"))  # Redirect to user page
@@ -149,9 +149,11 @@ def upload_file():
 
 
 @app.route("/download/<filename>")
-def decrypt_and_download(filename):
+def download(filename):
     user = request.args.get("user")
+    print(user)
     private_key = request.args.get("private_key")
+    print(user, private_key)
     symmetric_key = db.getSymmetricKey(user)
     decrypted_symmetric_key = rsa.decrypt(
         symmetric_key, rsa.PrivateKey.load_pkcs1(private_key.encode())
