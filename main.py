@@ -47,7 +47,6 @@ def allowed_file_type(filename):
 
 @login_manager.user_loader
 def load_user(user_id):
-    print("loading user")
     return db.getUserId(user_id)
 
 
@@ -62,8 +61,7 @@ def index():
             login_user(userToLogin, remember=False)
             return redirect(url_for("user"))
         else:
-            print("Login failed")
-            return redirect(url_for("index"))
+            return render_template("index.html", errorMsg="Invalid Login")
     return render_template("index.html")
 
 
