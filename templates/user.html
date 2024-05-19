@@ -43,7 +43,7 @@
       <tr>
         <td>{{ file }}</td>
         <td>{{ sender }}</td>
-        <td><a href="{{ url_for('decrypt_and_download', filename=file, private_key=private_key, user=user) }}">Download</a></td>
+        <td><a href="{{ url_for('download', filename=file, private_key=private_key, user=user) }}">Download</a></td>
       </tr>
       {% endfor %}
     </tbody>

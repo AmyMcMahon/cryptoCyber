@@ -1,3 +1,4 @@
+import base64
 import os
 import pyAesCrypt
 import rsa
@@ -23,9 +24,10 @@ def hash_password(password):
 
 
 # Function to process the uploaded file
-def process_file(filename, password, app):
+def process_file(filename, key, app):
+    key_string = base64.b64encode(key).decode('utf-8')
     # Encryption
-    encrypt_file(filename, password, app)
+    encrypt_file(filename, key_string, app)
 
     # Sender side Integrity
     sign_file(filename, app)
