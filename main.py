@@ -33,8 +33,8 @@ app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 
 db = Database()
 login_manager = LoginManager()
+login_manager.login_view = "index"
 login_manager.init_app(app)
-
 ALLOWED_EXTENSIONS = {"txt"}
 app.config["UPLOAD_FOLDER"] = "uploads"
 app.config["DOWNLOAD_FOLDER"] = "downloads"
