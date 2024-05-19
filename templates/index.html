@@ -13,10 +13,11 @@
         <form action="/" method="POST" enctype="multipart/form-data">
             <fieldset>
               <label>
-                Email
+                Username
                 <input
                   type="text"
                   name="username"
+                  required
                   placeholder="Username"
                   autocomplete="username"
                 />
@@ -26,10 +27,12 @@
                 <input
                   type="password"
                   name="password"
+                  required
                   placeholder="Password"
                   autocomplete="current-password"
                 />
               </label>
+            <p><strong>{{errorMsg}}</strong></p>
             </fieldset>
             <button type="submit" class="btn btn-dark btn-sm">Sign Up</button>
           </form>

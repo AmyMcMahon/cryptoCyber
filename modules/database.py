@@ -29,7 +29,7 @@ class Database:
         )
         row = self.cursor.fetchone()
         return row[0]
-    
+
     def getSymmetricKey(self, username):
         return "idk what u want mark"
         self.cursor.execute(
@@ -37,22 +37,26 @@ class Database:
         )
         row = self.cursor.fetchone()
         return row[0]
-    
+
     def getPassword(self, username):
         self.cursor.execute(
             'SELECT password FROM USERS WHERE username = "' + username + '"'
         )
         row = self.cursor.fetchone()
+        if row is None:
+            return None
         return row[0]
 
     def check_Login(self, username, password):
         pass_hash = self.getPassword(username)
+        if pass_hash is None:
+            return False
         userPass = password.encode("utf-8")
         result = bcrypt.checkpw(userPass, pass_hash)
         return result
 
     def getUserId(self, id):
-        self.cursor.execute("SELECT username FROM USERS WHERE id = ?", (id,))
+        self.cursor.execute("SELECT * FROM USERS WHERE id = ?", (id,))
         row = self.cursor.fetchone()
         if row is not None:
             return User(int(row[3]), row[0], row[1], row[2])
@@ -86,7 +90,9 @@ class Database:
         return rows
 
     def getUsersFiles(self, username):
-        self.cursor.execute('SELECT sender, file_path FROM FILES WHERE receiver = "' + username + '"')
+        self.cursor.execute(
+            'SELECT sender, file_path FROM FILES WHERE receiver = "' + username + '"'
+        )
         rows = self.cursor.fetchall()
         clean_rows = []
         for sender, file_path in rows:
