@@ -126,12 +126,7 @@ def upload_file():
         if not receiver_public_key_str:
             return jsonify({"error": "Receiver's public key not found"})
 
-        receiver_public_key = rsa.PublicKey.load_pkcs1(receiver_public_key_str)
-
-        symmetric_key = rsa.randnum.read_random_bits(256)
-
-        # Encrypt the symmetric key with receiver's public key
-        encrypted_symmetric_key = rsa.encrypt(symmetric_key, receiver_public_key)
+        encrypted_symmetric_key, symmetric_key = enc.make_symmetric_key(receiver_public_key_str)
 
         filename = secure_filename(file.filename)
         filePath = os.path.join(app.config["UPLOAD_FOLDER"], filename)
@@ -155,11 +150,10 @@ def download(filename):
     private_key = request.args.get("private_key")
     print(user, private_key)
     symmetric_key = db.getSymmetricKey(user)
-    decrypted_symmetric_key = rsa.decrypt(
-        symmetric_key, rsa.PrivateKey.load_pkcs1(private_key.encode())
-    )
+    decrypted_symmetric_key = enc.unmake_symmetric_key(symmetric_key, private_key)
     decrypted_filename = filename.replace(".aes", "")
     enc.decrypt_file(filename, decrypted_filename, decrypted_symmetric_key, app)
+    
     if enc.verify_signature(decrypted_filename, app):
         send_file(
             os.path.join(app.config["UPLOAD_FOLDER"], decrypted_filename),
