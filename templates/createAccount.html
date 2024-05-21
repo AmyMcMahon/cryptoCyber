@@ -1,43 +1,116 @@
+<!DOCTYPE html>
 <html>
-<link
-  rel="stylesheet"
-  href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.indigo.min.css"
-/>
+
+<head>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.indigo.min.css" />
+</head>
+
 <body>
-    <main class="container">
-        <h1> Create an Account </h1>
-        <form action="/createAccount" method="POST" enctype="multipart/form-data">
-            <fieldset>
-                <label>
-                Username
-                <input
-                  type="text"
-                  name="username"
-                  placeholder="Username"
-                  autocomplete="Username"
-                />
-                </label>
-                <label>
-                Password
-                <input
-                  type="password"
-                  name="password"
-                  placeholder="Password"
-                  autocomplete="Password"
-                />
-                </label>
-                <button type="submit" class="btn btn-dark btn-sm">Sign Up</button>
-            </fieldset>
-          </form>
+  <main class="container">
+    <h1>Create an Account</h1>
+    <form id="createAccountForm" enctype="multipart/form-data">
+      <fieldset>
+        <label>
+          Username
+          <input type="text" name="username" placeholder="Username" autocomplete="username" required />
+        </label>
+        <label>
+          Password
+          <input type="password" name="password" placeholder="Password" autocomplete="current-password" required />
+        </label>
+        <button type="submit" class="btn btn-dark btn-sm">Sign Up</button>
+      </fieldset>
+    </form>
 
-          <button>
-            <a href="/admin">Admin</a>
-          </button>
-          <button>
-            <a href="/user">User</a>
-          </button>
-      </main>
-    
+    <button>
+      <a href="/admin">Admin</a>
+    </button>
+    <button>
+      <a href="/user">User</a>
+    </button>
+  </main>
 
+  <script>
+    async function genKey() {
+      return await window.crypto.subtle.generateKey(
+        {
+          name: "RSA-OAEP",
+          modulusLength: 2048,
+          publicExponent: new Uint8Array([1, 0, 1]),
+          hash: "SHA-256",
+        },
+        true,
+        ["encrypt", "decrypt"]
+      );
+    }
+
+    function encodeKey(key) {
+      var str = String.fromCharCode.apply(null, new Uint8Array(key));
+      var b64 = window.btoa(str);
+      return b64;
+    }
+
+    async function exportPublicKey(key) {
+      const publicKey = await crypto.subtle.exportKey("spki", key);
+      return encodeKey(publicKey);
+    }
+
+    var idb = window.indexedDB.open("cs4455", 1);
+    var db;
+
+    idb.onerror = (event) => {
+      console.log("Can't open indexedb");
+    };
+
+    idb.onupgradeneeded = (event) => {
+      db = event.target.result;
+      db.createObjectStore("dh-key", { keyPath: "id" });
+      console.log("Upgraded");
+    };
+
+    idb.onsuccess = (event) => {
+      db = event.target.result;
+      console.log("db opened");
+    };
+
+    document.getElementById('createAccountForm').addEventListener('submit', async (event) => {
+      event.preventDefault();
+
+      const username = event.target.username.value;
+      const password = event.target.password.value;
+
+      // Generate the key pair
+      const keyPair = await genKey();
+
+      // Save the key pair to IndexedDB
+      let transaction = db.transaction(["dh-key"], "readwrite");
+      let store = transaction.objectStore("dh-key");
+      store.put({ id: 1, value: keyPair });
+
+      // Export the public key to include in the form
+      const publicKeyPem = await exportPublicKey(keyPair.publicKey);
+
+      // Create a new FormData object and append the public key
+      const formData = new FormData();
+      formData.append('username', username);
+      formData.append('password', password);
+      formData.append('publicKey', publicKeyPem);
+
+      // Send the form data
+      fetch('/createAccount', {
+        method: 'POST',
+        body: formData
+      }).then(response => {
+        if (response.ok) {
+          console.log('Account created successfully.');
+        } else {
+          console.error('Error creating account.');
+        }
+      }).catch(error => {
+        console.error('Fetch error: ', error);
+      });
+    });
+  </script>
 </body>
+
 </html>
