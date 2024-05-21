@@ -8,18 +8,17 @@ class Database:
     def __init__(self):
         self.connect = sqlite3.connect("database.db", check_same_thread=False)
         self.connect.execute(
-            "CREATE TABLE IF NOT EXISTS USERS (username TEXT, password TEXT, public_key TEXT, id INTEGER PRIMARY KEY AUTOINCREMENT)"
+            "CREATE TABLE IF NOT EXISTS USERS (username TEXT, password TEXT, salt TEXT, public_key TEXT, id INTEGER PRIMARY KEY AUTOINCREMENT)"
         )
         self.connect.execute(
             "CREATE TABLE IF NOT EXISTS FILES (sender TEXT, receiver TEXT, file_path TEXT, id INTEGER PRIMARY KEY AUTOINCREMENT, symmetric_key TEXT)"
         )
         self.cursor = self.connect.cursor()
 
-    def createUser(self, username, password, public_key):
-        password = enc.hash_password(password)
+    def createUser(self, username, password, salt, public_key):
         self.cursor.execute(
-            "INSERT INTO USERS(username, password, public_key) VALUES (?, ?, ?)",
-            (username, password, public_key),
+            "INSERT INTO USERS(username, password, salt, public_key) VALUES (?, ?, ?, ?)",
+            (username, password, salt, public_key),
         )
         self.connect.commit()
 
@@ -29,7 +28,6 @@ class Database:
         )
         row = self.cursor.fetchone()
         return row[0]
-
 
     def getPassword(self, username):
         self.cursor.execute(
@@ -92,7 +90,7 @@ class Database:
             file_path = file_path.split("/")[-1]
             clean_rows.append((sender, file_path))
         return clean_rows
-    
+
     def getSymmetricKey(self, file_path):
         self.cursor.execute(
             'SELECT symmetric_key FROM FILES WHERE file_path = "' + file_path + '"'

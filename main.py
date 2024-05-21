@@ -79,8 +79,9 @@ def create():
         username = request.form["username"]
         password = request.form["password"]
         public_key = request.form["publicKey"]
-        db.createUser(username, password, public_key)
-        return render_template("index.html")  
+        salt = request.form["salt"]
+        db.createUser(username, password, salt, public_key)
+        return render_template("index.html")
     return render_template("createAccount.html")
 
 
@@ -123,23 +124,24 @@ def upload_file():
         if not receiver_public_key_str:
             return jsonify({"error": "Receiver's public key not found"})
 
-        encrypted_symmetric_key, symmetric_key = enc.make_symmetric_key(receiver_public_key_str)
+        encrypted_symmetric_key, symmetric_key = enc.make_symmetric_key(
+            receiver_public_key_str
+        )
 
         filename = secure_filename(file.filename)
         filePath = os.path.join(app.config["UPLOAD_FOLDER"], filename)
 
         file.save(filePath)
         db.insertFile(username, receiver, filePath, encrypted_symmetric_key)
-        enc.process_file(
-            filename, symmetric_key, app
-        )  
+        enc.process_file(filename, symmetric_key, app)
 
         return redirect(url_for("user"))  # Redirect to user page
 
     else:
         return jsonify({"error": "File type not allowed"})
 
-@app.route("/download" , methods=["POST", "GET"])
+
+@app.route("/download", methods=["POST", "GET"])
 def download():
     filename = request.form["filename"]
     private_key = request.form["private_key"]
@@ -152,7 +154,7 @@ def download():
     )
     decrypted_filename = filename.replace(".aes", "")
     enc.decrypt_file(filename, decrypted_filename, decrypted_symmetric_key, app)
-    
+
     if enc.verify_signature(decrypted_filename, app):
         send_file(
             os.path.join(app.config["UPLOAD_FOLDER"], decrypted_filename),

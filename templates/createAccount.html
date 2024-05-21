@@ -46,14 +46,19 @@
 
     async function hashPass(password) {
       encoder = new TextEncoder();
+      decoder = new TextDecoder();
       const salt = window.crypto.getRandomValues(new Uint8Array(16));
       const passwordEncoded = encoder.encode(password);
       const data = new Uint8Array(passwordEncoded.length + salt.length);
       data.set(passwordEncoded);
       data.set(salt, passwordEncoded.length);
       const hash = await window.crypto.subtle.digest("SHA-256", data);
-      return hash
-    }
+      const hashArray = Array.from(new Uint8Array(hash)); 
+      const hashHex = hashArray
+        .map((b) => b.toString(16).padStart(2, "0"))
+        .join(""); 
+      return {hashHex, salt};
+      }
 
     function encodeKey(key) {
       var str = String.fromCharCode.apply(null, new Uint8Array(key));
@@ -88,8 +93,8 @@
       event.preventDefault();
 
       const username = event.target.username.value;
-      password = event.target.password.value;
-      const hash_password = await hashPass(password);
+      let password = event.target.password.value;
+      const {hashHex, salt } = await hashPass(password);
 
       // Generate the key pair
       const keyPair = await genKey();
@@ -105,9 +110,9 @@
       // Create a new FormData object and append the public key
       const formData = new FormData();
       formData.append('username', username);
-      formData.append('password', hash_password);
+      formData.append('password', hashHex);
+      formData.append('salt', salt);
       formData.append('publicKey', publicKeyPem);
-
       // Send the form data
       fetch('/createAccount', {
         method: 'POST',
