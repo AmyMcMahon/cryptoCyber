@@ -87,3 +87,15 @@ def decrypt_file(filename, decrypted_filename, password, app):
                 pyAesCrypt.decryptStream(fIn, fOut, password, bufferSize)
             except ValueError:
                 print("Decryption failed")
+
+def make_symmetric_key(receiver_public_key):
+    receiver_public_key = rsa.PublicKey.load_pkcs1(receiver_public_key)
+    symmetric_key = rsa.randnum.read_random_bits(256)
+    encrypted_symmetric_key = rsa.encrypt(symmetric_key, receiver_public_key)
+
+    return encrypted_symmetric_key, symmetric_key
+
+def unmake_symmetric_key(encrypted_symmetric_key, private_key):
+    private_key = rsa.PrivateKey.load_pkcs1(private_key)
+    symmetric_key = rsa.decrypt(encrypted_symmetric_key, private_key)
+    return symmetric_key

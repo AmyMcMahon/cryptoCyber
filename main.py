@@ -123,12 +123,7 @@ def upload_file():
         if not receiver_public_key_str:
             return jsonify({"error": "Receiver's public key not found"})
 
-        receiver_public_key = rsa.PublicKey.load_pkcs1(receiver_public_key_str)
-
-        symmetric_key = rsa.randnum.read_random_bits(256)
-
-        # Encrypt the symmetric key with receiver's public key
-        encrypted_symmetric_key = rsa.encrypt(symmetric_key, receiver_public_key)
+        encrypted_symmetric_key, symmetric_key = enc.make_symmetric_key(receiver_public_key_str)
 
         filename = secure_filename(file.filename)
         filePath = os.path.join(app.config["UPLOAD_FOLDER"], filename)
@@ -144,7 +139,6 @@ def upload_file():
     else:
         return jsonify({"error": "File type not allowed"})
 
-
 @app.route("/download" , methods=["POST", "GET"])
 def download():
     filename = request.form["filename"]
@@ -158,6 +152,7 @@ def download():
     )
     decrypted_filename = filename.replace(".aes", "")
     enc.decrypt_file(filename, decrypted_filename, decrypted_symmetric_key, app)
+    
     if enc.verify_signature(decrypted_filename, app):
         send_file(
             os.path.join(app.config["UPLOAD_FOLDER"], decrypted_filename),
