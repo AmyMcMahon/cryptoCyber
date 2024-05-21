@@ -13,43 +13,138 @@
     <h1 style="display: inline-block;">User Page</h1>
     <button style="display: inline-block; margin-left:77%" onclick="window.location.href='/logout'">Logout</button>
 
-  <form action="/upload" method="POST" enctype="multipart/form-data">
-    <label for="file">Choose a file:</label>
-    <input type="file" id="file" name="file" accept=".txt">
+    <form action="/upload" method="POST" enctype="multipart/form-data">
+      <label for="file">Choose a file:</label>
+      <input type="file" id="file" name="file" accept=".txt">
 
-    <select name="select" aria-label="Select" required>
-      <option selected disabled value="">Select</option>
-      {% for user in users %}
-      <option>{{ user[0] }}</option>
-      {% endfor %}
-    </select>
-    
-    <button type="submit">Upload</button>
-    
-    
-  </form>
+      <select name="select" aria-label="Select" required>
+        <option selected disabled value="">Select</option>
+        {% for user in users %}
+        <option>{{ user[0] }}</option>
+        {% endfor %}
+      </select>
 
-  <h2>Download Files</h2>
-  <table>
-    <thead>
-      <tr>
-        <th>File Name</th>
-        <th>Owner</th>
-        <th>Download Link</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for sender, file in files %}
-      <tr>
-        <td>{{ file }}</td>
-        <td>{{ sender }}</td>
-        <td><a href="{{ url_for('download', filename=file, private_key=private_key, user=user) }}">Download</a></td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-</main>
+      <button type="submit">Upload</button>
+    </form>
+
+    <h2>Download Files</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>File Name</th>
+          <th>Owner</th>
+          <th>Download Link</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for sender, file in files %}
+        <tr>
+          <td>{{ file }}</td>
+          <td>{{ sender }}</td>
+          <td><button onclick="downloadFile('{{ file }}', '{{ sender }}')">Download</button></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </main>
+
+  <script>
+    var db;
+    var idb = window.indexedDB.open("cs4455", 1);
+
+    idb.onerror = (event) => {
+      console.log("Can't open indexedb");
+    };
+
+    idb.onsuccess = (event) => {
+      db = event.target.result;
+      console.log("db opened");
+    };
+
+    async function getPrivateKey() {
+      return new Promise((resolve, reject) => {
+        let transaction = db.transaction(["dh-key"], "readonly");
+        let store = transaction.objectStore("dh-key");
+        let request = store.get(1);
+
+        request.onsuccess = (event) => {
+          if (request.result) {
+            resolve(request.result.value.privateKey);
+          } else {
+            reject("Private key not found in IndexedDB");
+          }
+        };
+
+        request.onerror = (event) => {
+          reject("Error retrieving private key from IndexedDB");
+        };
+      });
+    }
+
+    async function decryptSymmetricKey(privateKey, encryptedSymmetricKey) {
+      const encryptedKeyBuffer = Uint8Array.from(atob(encryptedSymmetricKey), c => c.charCodeAt(0)).buffer;
+      const decryptedKey = await window.crypto.subtle.decrypt(
+        {
+          name: "RSA-OAEP"
+        },
+        privateKey,
+        encryptedKeyBuffer
+      );
+
+      return new Uint8Array(decryptedKey);
+    }
+
+    async function decryptFile(encryptedFileContent, symmetricKey) {
+      const algorithm = {
+        name: "AES-GCM",
+        iv: new Uint8Array(12) 
+      };
+      const key = await window.crypto.subtle.importKey(
+        "raw",
+        symmetricKey,
+        algorithm,
+        false,
+        ["decrypt"]
+      );
+
+      const encryptedFileBuffer = Uint8Array.from(atob(encryptedFileContent), c => c.charCodeAt(0)).buffer;
+      const decryptedContent = await window.crypto.subtle.decrypt(
+        algorithm,
+        key,
+        encryptedFileBuffer
+      );
+
+      return new TextDecoder().decode(decryptedContent);
+    }
+
+    async function downloadFile(fileName, sender) {
+      try {
+        const privateKey = await getPrivateKey();
+
+        const response = await fetch(`/getEncryptedSymmetricKey?file=${fileName}&sender=${sender}`);
+        const encryptedSymmetricKey = await response.text();
+
+        const symmetricKey = await decryptSymmetricKey(privateKey, encryptedSymmetricKey);
+
+        const fileResponse = await fetch(`/downloadEncryptedFile?file=${fileName}`);
+        const encryptedFileContent = await fileResponse.text();
+
+        const decryptedContent = await decryptFile(encryptedFileContent, symmetricKey);
+
+        const blob = new Blob([decryptedContent], { type: 'text/plain' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.style.display = 'none';
+        a.href = url;
+        a.download = fileName;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+      } catch (error) {
+        console.error('Error during decryption:', error);
+      }
+    }
+  </script>
 </body>
 
 </html>
-

@@ -30,13 +30,6 @@ class Database:
         row = self.cursor.fetchone()
         return row[0]
 
-    def getSymmetricKey(self, username):
-        return "idk what u want mark"
-        self.cursor.execute(
-            'SELECT symmetric_key FROM USERS WHERE username = "' + username + '"'
-        )
-        row = self.cursor.fetchone()
-        return row[0]
 
     def getPassword(self, username):
         self.cursor.execute(
@@ -99,6 +92,13 @@ class Database:
             file_path = file_path.split("/")[-1]
             clean_rows.append((sender, file_path))
         return clean_rows
+    
+    def getSymmetricKey(self, file_path):
+        self.cursor.execute(
+            'SELECT symmetric_key FROM FILES WHERE file_path = "' + file_path + '"'
+        )
+        row = self.cursor.fetchone()
+        return row[0]
 
     # maybe get rid of this ltr
     def getAllFilesAdmin(self):

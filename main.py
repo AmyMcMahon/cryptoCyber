@@ -78,12 +78,9 @@ def create():
     if request.method == "POST":
         username = request.form["username"]
         password = request.form["password"]
-        public_key, private_key = enc.generate_key()
+        public_key = request.form["publicKey"]
         db.createUser(username, password, public_key)
-        return render_template(
-            "index.html", private_key=private_key
-        )  # why are we sending the private key here ??
-
+        return render_template("index.html")  
     return render_template("createAccount.html")
 
 
@@ -135,22 +132,24 @@ def upload_file():
         db.insertFile(username, receiver, filePath, encrypted_symmetric_key)
         enc.process_file(
             filename, symmetric_key, app
-        )  # what is this password supposed to be ???
+        )  
 
         return redirect(url_for("user"))  # Redirect to user page
 
     else:
         return jsonify({"error": "File type not allowed"})
 
+@app.route("/download" , methods=["POST", "GET"])
+def download():
+    filename = request.form["filename"]
+    private_key = request.form["private_key"]
+    print(filename)
+    print(private_key)
+    symmetric_key = db.getSymmetricKey(filename)
 
-@app.route("/download/<filename>")
-def download(filename):
-    user = request.args.get("user")
-    print(user)
-    private_key = request.args.get("private_key")
-    print(user, private_key)
-    symmetric_key = db.getSymmetricKey(user)
-    decrypted_symmetric_key = enc.unmake_symmetric_key(symmetric_key, private_key)
+    decrypted_symmetric_key = rsa.decrypt(
+        symmetric_key, rsa.PrivateKey.load_pkcs1(private_key.encode())
+    )
     decrypted_filename = filename.replace(".aes", "")
     enc.decrypt_file(filename, decrypted_filename, decrypted_symmetric_key, app)
     
