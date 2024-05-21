@@ -44,6 +44,17 @@
       );
     }
 
+    async function hashPass(password) {
+      encoder = new TextEncoder();
+      const salt = window.crypto.getRandomValues(new Uint8Array(16));
+      const passwordEncoded = encoder.encode(password);
+      const data = new Uint8Array(passwordEncoded.length + salt.length);
+      data.set(passwordEncoded);
+      data.set(salt, passwordEncoded.length);
+      const hash = await window.crypto.subtle.digest("SHA-256", data);
+      return hash
+    }
+
     function encodeKey(key) {
       var str = String.fromCharCode.apply(null, new Uint8Array(key));
       var b64 = window.btoa(str);
@@ -77,7 +88,8 @@
       event.preventDefault();
 
       const username = event.target.username.value;
-      const password = event.target.password.value;
+      password = event.target.password.value;
+      const hash_password = await hashPass(password);
 
       // Generate the key pair
       const keyPair = await genKey();
@@ -93,7 +105,7 @@
       // Create a new FormData object and append the public key
       const formData = new FormData();
       formData.append('username', username);
-      formData.append('password', password);
+      formData.append('password', hash_password);
       formData.append('publicKey', publicKeyPem);
 
       // Send the form data
