@@ -11,7 +11,7 @@ class Database:
             "CREATE TABLE IF NOT EXISTS USERS (username TEXT, password TEXT, salt TEXT, public_key TEXT, id INTEGER PRIMARY KEY AUTOINCREMENT)"
         )
         self.connect.execute(
-            "CREATE TABLE IF NOT EXISTS FILES (sender TEXT, receiver TEXT, file_path TEXT, id INTEGER PRIMARY KEY AUTOINCREMENT, symmetric_key TEXT)"
+            "CREATE TABLE IF NOT EXISTS FILES (sender TEXT, receiver TEXT, file_path TEXT, id INTEGER PRIMARY KEY AUTOINCREMENT, symmetric_key TEXT, iv TEXT)"
         )
         self.cursor = self.connect.cursor()
 
@@ -71,10 +71,10 @@ class Database:
         else:
             return None
 
-    def insertFile(self, sender, receiver, file_path, symmetric_key):
+    def insertFile(self, sender, receiver, file_path, symmetric_key, iv):
         self.cursor.execute(
-            "INSERT INTO FILES(sender, receiver, file_path, symmetric_key) VALUES (?, ?, ?, ?)",
-            (sender, receiver, file_path, symmetric_key),
+            "INSERT INTO FILES(sender, receiver, file_path, symmetric_key, iv) VALUES (?, ?, ?, ?, ?)",
+            (sender, receiver, file_path, symmetric_key, iv),
         )
         self.connect.commit()
 
@@ -103,6 +103,13 @@ class Database:
     def getSymmetricKey(self, file_path):
         self.cursor.execute(
             'SELECT symmetric_key FROM FILES WHERE file_path = "' + file_path + '"'
+        )
+        row = self.cursor.fetchone()
+        return row[0]
+
+    def getIv(self, file_path):
+        self.cursor.execute(
+            'SELECT iv FROM FILES WHERE file_path = "' + file_path + '"'
         )
         row = self.cursor.fetchone()
         return row[0]

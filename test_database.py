@@ -9,7 +9,7 @@ class TestDatebase(unittest.TestCase):
         self.db = Database()
         self.db.createUser("testsender", "testpassword", "testpublickey")
         self.db.createUser("testreceicer", "testpassword", "testpublickey")
-        self.db.insertFile("testsender", "testreceiver", "testfile", "testsymmetrickey")
+        self.db.insertFile("testsender", "testreceiver", "testfile", "testsymmetrickey", "testiv")
 
     def testCheckUserTable(self):
         user1 = "testsender"

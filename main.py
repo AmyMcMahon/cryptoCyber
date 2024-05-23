@@ -116,6 +116,7 @@ def upload_file():
     file = request.files["file"]
     symmetric_key = request.form["encryptedSymmetricKey"]
     receiver = request.form["select"]
+    iv = request.form["iv"]
 
     if file.filename == "":
         return jsonify({"error": "No selected file"})
@@ -128,7 +129,7 @@ def upload_file():
     filename = secure_filename(file.filename)
     filePath = os.path.join(app.config["UPLOAD_FOLDER"], filename)
     file.save(filePath)
-    db.insertFile(username, receiver, filePath, symmetric_key)
+    db.insertFile(username, receiver, filename, symmetric_key, iv)
 
     return jsonify({"success": True})
 
@@ -146,12 +147,12 @@ def get_public_key():
 
 @app.route("/getEncryptedSymmetricKey", methods=["GET"])
 def get_encrypted_symmetric_key():
-    # filename = request.args.get("file")
-    # symmetric_key = db.getSymmetricKey(filename) 
-    symmetric_key = "super secret"
-
+    filename = request.args.get("file")
+    symmetric_key = db.getSymmetricKey(filename) 
+    iv = db.getIv(filename)
+    print(symmetric_key)
     if symmetric_key:
-        return jsonify({"symmetricKey": symmetric_key})
+        return jsonify({"symmetricKey": symmetric_key, "iv": iv})
     else:
         return jsonify({"error": "Symmetric key not found"}), 404
 

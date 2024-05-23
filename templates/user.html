@@ -217,8 +217,9 @@
           throw new Error(keyData.error);
         }
         const encryptedSymmetricKey = keyData.symmetricKey;
+        console.log(encryptedSymmetricKey);
         const iv = keyData.iv;
-
+        console.log(keyData);
         const symmetricKey = await decryptSymmetricKey(privateKey, encryptedSymmetricKey);
 
         const fileResponse = await fetch(`/downloadEncryptedFile?file=${fileName}`);
@@ -234,8 +235,7 @@
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.style.display = 'none';
-        a.href = url;
-        a.download = fileName.replace(".enc", "");  // Adjust file extension as needed
+        a.href = url;  
         document.body.appendChild(a);
         a.click();
         window.URL.revokeObjectURL(url);
