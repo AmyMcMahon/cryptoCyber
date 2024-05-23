@@ -79,9 +79,8 @@ def create():
         username = request.form["username"]
         password = request.form["password"]
         public_key = request.form["publicKey"]
-        salt = request.form["salt"]
-        db.createUser(username, password, salt, public_key)
-        return render_template("index.html")
+        db.createUser(username, password, public_key)
+        return redirect(url_for("user"))
     return render_template("createAccount.html")
 
 

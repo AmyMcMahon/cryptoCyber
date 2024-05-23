@@ -21,7 +21,6 @@ class Database:
         saltedPassword = password.encode("utf-8") + salt
         h.update(saltedPassword)
         password = h.hexdigest().encode("utf-8")
-        print("Update PASSWORD", password)
 
         self.cursor.execute(
             "INSERT INTO USERS(username, password, salt, public_key) VALUES (?, ?, ?, ?)",
@@ -38,26 +37,29 @@ class Database:
 
     def getPassword(self, username):
         self.cursor.execute(
-            'SELECT password FROM USERS WHERE username = "' + username + '"'
+            "SELECT password, salt FROM USERS WHERE username = ?", (username,)
         )
         row = self.cursor.fetchone()
         if row is None:
             return None
-        return row[0]
+        return row[0], row[1]
 
     def check_Login(self, username, password):
-        pass_hash = self.getPassword(username)
-        if pass_hash is None:
+        pass_hash, salt = self.getPassword(username)
+        h = SHA256.new()
+        saltedPassword = password.encode("utf-8") + salt
+        h.update(saltedPassword)
+        passwordLogin = h.hexdigest().encode("utf-8")
+        if pass_hash == passwordLogin:
+            return True
+        else:
             return False
-        userPass = password.encode("utf-8")
-        result = bcrypt.checkpw(userPass, pass_hash)
-        return result
 
     def getUserId(self, id):
         self.cursor.execute("SELECT * FROM USERS WHERE id = ?", (id,))
         row = self.cursor.fetchone()
         if row is not None:
-            return User(int(row[3]), row[0], row[1], row[2])
+            return User(int(row[4]), row[0], row[1], row[2])
         else:
             return None
 
@@ -65,7 +67,7 @@ class Database:
         self.cursor.execute('SELECT * FROM USERS WHERE username = "' + username + '"')
         row = self.cursor.fetchone()
         if row is not None:
-            return User(int(row[3]), row[0], row[1], row[2])
+            return User(int(row[4]), row[0], row[1], row[2])
         else:
             return None
 
