@@ -77,7 +77,6 @@ def create():
         username = secure_filename(request.form["username"])
         password = request.form["password"]
         public_key = request.form["publicKey"]
-        
         path = os.path.join(app.config["UPLOAD_FOLDER"], username)
         try:
             db.createUser(username, password, public_key)
@@ -87,8 +86,7 @@ def create():
             print("failed to make directory or add to db") 
             #should change error code to be better lol
             return jsonify({"message": "Error creating account."}),500
-        
-
+    
     return render_template("createAccount.html")
 
 
@@ -124,6 +122,7 @@ def upload_file():
     file = request.files["file"]
     symmetric_key = request.form["encryptedSymmetricKey"]
     receiver = request.form["select"]
+    iv = request.form["iv"]
 
     if file.filename == "":
         return jsonify({"error": "No selected file"})
@@ -143,7 +142,6 @@ def upload_file():
         return jsonify({"success": True})
     return jsonify({"error": "Failed to upload file"})
 
-
 @app.route("/getPublicKey", methods=["GET"])
 def get_public_key():
     username = request.args.get("user")
@@ -158,12 +156,12 @@ def get_public_key():
 
 @app.route("/getEncryptedSymmetricKey", methods=["GET"])
 def get_encrypted_symmetric_key():
-    # filename = request.args.get("file")
-    # symmetric_key = db.getSymmetricKey(filename) 
-    symmetric_key = "super secret"
-
+    filename = request.args.get("file")
+    symmetric_key = db.getSymmetricKey(filename) 
+    iv = db.getIv(filename)
+    print(symmetric_key)
     if symmetric_key:
-        return jsonify({"symmetricKey": symmetric_key})
+        return jsonify({"symmetricKey": symmetric_key, "iv": iv})
     else:
         return jsonify({"error": "Symmetric key not found"}), 404
 

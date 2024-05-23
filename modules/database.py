@@ -1,6 +1,6 @@
 import sqlite3
-import bcrypt
-import modules.encryption as enc
+from Crypto.Hash import SHA256
+import Crypto.Random
 from modules.user import User
 
 
@@ -8,10 +8,10 @@ class Database:
     def __init__(self):
         self.connect = sqlite3.connect("database.db", check_same_thread=False)
         self.connect.execute(
-            "CREATE TABLE IF NOT EXISTS USERS (username TEXT, password TEXT, public_key TEXT, id INTEGER PRIMARY KEY AUTOINCREMENT)"
+            "CREATE TABLE IF NOT EXISTS USERS (username TEXT, password TEXT, salt TEXT, public_key TEXT, id INTEGER PRIMARY KEY AUTOINCREMENT)"
         )
         self.connect.execute(
-            "CREATE TABLE IF NOT EXISTS FILES (sender TEXT, receiver TEXT, file_path TEXT, id INTEGER PRIMARY KEY AUTOINCREMENT, symmetric_key TEXT)"
+            "CREATE TABLE IF NOT EXISTS FILES (sender TEXT, receiver TEXT, file_path TEXT, id INTEGER PRIMARY KEY AUTOINCREMENT, symmetric_key TEXT, iv TEXT)"
         )
         self.cursor = self.connect.cursor()
 
@@ -21,14 +21,18 @@ class Database:
         )
         row = self.cursor.fetchone()
         if row is None:
-            password = enc.hash_password(password)
-            self.cursor.execute(
+           h = SHA256.new()
+           salt = Crypto.Random.get_random_bytes(16)
+           saltedPassword = password.encode("utf-8") + salt
+           h.update(saltedPassword)
+           password = h.hexdigest().encode("utf-8")
+           self.cursor.execute(
                 "INSERT INTO USERS(username, password, public_key) VALUES (?, ?, ?)",
                 (username, password, public_key),
-            )
-            self.connect.commit()
+           )
+           self.connect.commit()
         else:
-            raise Exception("User already exists")
+           raise Exception("User already exists")
 
     def getPublicKey(self, username):
         self.cursor.execute(
@@ -37,29 +41,31 @@ class Database:
         row = self.cursor.fetchone()
         return row[0]
 
-
     def getPassword(self, username):
         self.cursor.execute(
-            'SELECT password FROM USERS WHERE username = "' + username + '"'
+            "SELECT password, salt FROM USERS WHERE username = ?", (username,)
         )
         row = self.cursor.fetchone()
         if row is None:
             return None
-        return row[0]
+        return row[0], row[1]
 
     def check_Login(self, username, password):
-        pass_hash = self.getPassword(username)
-        if pass_hash is None:
+        pass_hash, salt = self.getPassword(username)
+        h = SHA256.new()
+        saltedPassword = password.encode("utf-8") + salt
+        h.update(saltedPassword)
+        passwordLogin = h.hexdigest().encode("utf-8")
+        if pass_hash == passwordLogin:
+            return True
+        else:
             return False
-        userPass = password.encode("utf-8")
-        result = bcrypt.checkpw(userPass, pass_hash)
-        return result
 
     def getUserId(self, id):
         self.cursor.execute("SELECT * FROM USERS WHERE id = ?", (id,))
         row = self.cursor.fetchone()
         if row is not None:
-            return User(int(row[3]), row[0], row[1], row[2])
+            return User(int(row[4]), row[0], row[1], row[2])
         else:
             return None
 
@@ -67,14 +73,14 @@ class Database:
         self.cursor.execute('SELECT * FROM USERS WHERE username = "' + username + '"')
         row = self.cursor.fetchone()
         if row is not None:
-            return User(int(row[3]), row[0], row[1], row[2])
+            return User(int(row[4]), row[0], row[1], row[2])
         else:
             return None
 
-    def insertFile(self, sender, receiver, file_path, symmetric_key):
+    def insertFile(self, sender, receiver, file_path, symmetric_key, iv):
         self.cursor.execute(
-            "INSERT INTO FILES(sender, receiver, file_path, symmetric_key) VALUES (?, ?, ?, ?)",
-            (sender, receiver, file_path, symmetric_key),
+            "INSERT INTO FILES(sender, receiver, file_path, symmetric_key, iv) VALUES (?, ?, ?, ?, ?)",
+            (sender, receiver, file_path, symmetric_key, iv),
         )
         self.connect.commit()
 
@@ -99,10 +105,17 @@ class Database:
             file_path = file_path.split("/")[-1]
             clean_rows.append((sender, file_path))
         return clean_rows
-    
+
     def getSymmetricKey(self, file_path):
         self.cursor.execute(
             'SELECT symmetric_key FROM FILES WHERE file_path = "' + file_path + '"'
+        )
+        row = self.cursor.fetchone()
+        return row[0]
+
+    def getIv(self, file_path):
+        self.cursor.execute(
+            'SELECT iv FROM FILES WHERE file_path = "' + file_path + '"'
         )
         row = self.cursor.fetchone()
         return row[0]
