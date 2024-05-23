@@ -16,23 +16,23 @@ class Database:
         self.cursor = self.connect.cursor()
 
     def createUser(self, username, password, public_key):
-        self.cursor.execute( 
+        self.cursor.execute(
             'SELECT public_key FROM USERS WHERE username = "' + username + '"'
         )
         row = self.cursor.fetchone()
         if row is None:
-           h = SHA256.new()
-           salt = Crypto.Random.get_random_bytes(16)
-           saltedPassword = password.encode("utf-8") + salt
-           h.update(saltedPassword)
-           password = h.hexdigest().encode("utf-8")
-           self.cursor.execute(
+            h = SHA256.new()
+            salt = Crypto.Random.get_random_bytes(16)
+            saltedPassword = password.encode("utf-8") + salt
+            h.update(saltedPassword)
+            password = h.hexdigest().encode("utf-8")
+            self.cursor.execute(
                 "INSERT INTO USERS(username, password, public_key) VALUES (?, ?, ?)",
                 (username, password, public_key),
-           )
-           self.connect.commit()
+            )
+            self.connect.commit()
         else:
-           raise Exception("User already exists")
+            raise Exception("User already exists")
 
     def getPublicKey(self, username):
         self.cursor.execute(
@@ -52,6 +52,9 @@ class Database:
 
     def check_Login(self, username, password):
         pass_hash, salt = self.getPassword(username)
+        if pass_hash is None:
+            return False
+
         h = SHA256.new()
         saltedPassword = password.encode("utf-8") + salt
         h.update(saltedPassword)
