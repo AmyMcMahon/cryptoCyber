@@ -16,12 +16,19 @@ class Database:
         self.cursor = self.connect.cursor()
 
     def createUser(self, username, password, public_key):
-        password = enc.hash_password(password)
-        self.cursor.execute(
-            "INSERT INTO USERS(username, password, public_key) VALUES (?, ?, ?)",
-            (username, password, public_key),
+        self.cursor.execute( 
+            'SELECT public_key FROM USERS WHERE username = "' + username + '"'
         )
-        self.connect.commit()
+        row = self.cursor.fetchone()
+        if row is None:
+            password = enc.hash_password(password)
+            self.cursor.execute(
+                "INSERT INTO USERS(username, password, public_key) VALUES (?, ?, ?)",
+                (username, password, public_key),
+            )
+            self.connect.commit()
+        else:
+            raise Exception("User already exists")
 
     def getPublicKey(self, username):
         self.cursor.execute(
