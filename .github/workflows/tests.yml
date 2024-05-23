@@ -29,6 +29,8 @@ jobs:
         pip install flask
         pip install werkzeug
         pip install pycryptodome
+        pip install pyAesCrypt
+        pip install rsa
         pip install flask_login
         
     - name: Test with unittest
