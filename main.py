@@ -105,63 +105,67 @@ def admin():
     return render_template("admin.html", users=users, files=files)
 
 
-@app.route("/upload", methods=["POST", "GET"])
-@login_required
+@app.route("/upload", methods=["POST"])
 def upload_file():
     if "file" not in request.files:
         return jsonify({"error": "No file part"})
-
+    if "encryptedSymmetricKey" not in request.form:
+        return jsonify({"error": "No symmetric key provided"})
+    if "select" not in request.form:
+        return jsonify({"error": "No receiver selected"})
     file = request.files["file"]
+    symmetric_key = request.form["encryptedSymmetricKey"]
+    receiver = request.form["select"]
+
     if file.filename == "":
         return jsonify({"error": "No selected file"})
-
-    if file and allowed_file_type(file.filename):
-        username = current_user.username
-        receiver = request.form["select"]
-
-        receiver_public_key_str = db.getPublicKey(receiver)
-        if not receiver_public_key_str:
-            return jsonify({"error": "Receiver's public key not found"})
-
-        encrypted_symmetric_key, symmetric_key = enc.make_symmetric_key(
-            receiver_public_key_str
-        )
-
-        filename = secure_filename(file.filename)
-        filePath = os.path.join(app.config["UPLOAD_FOLDER"], filename)
-
-        file.save(filePath)
-        db.insertFile(username, receiver, filePath, encrypted_symmetric_key)
-        enc.process_file(filename, symmetric_key, app)
-
-        return redirect(url_for("user"))  # Redirect to user page
-
-    else:
+    if not allowed_file_type(file.filename):
         return jsonify({"error": "File type not allowed"})
+    if not db.getPublicKey(receiver):
+        return jsonify({"error": "Receiver's public key not found"})
 
+    username = current_user.username
+    filename = secure_filename(file.filename)
+    filePath = os.path.join(app.config["UPLOAD_FOLDER"], filename)
+    file.save(filePath)
+    db.insertFile(username, receiver, filePath, symmetric_key)
 
-@app.route("/download", methods=["POST", "GET"])
-def download():
-    filename = request.form["filename"]
-    private_key = request.form["private_key"]
-    print(filename)
-    print(private_key)
-    symmetric_key = db.getSymmetricKey(filename)
+    return jsonify({"success": True})
 
-    decrypted_symmetric_key = rsa.decrypt(
-        symmetric_key, rsa.PrivateKey.load_pkcs1(private_key.encode())
-    )
-    decrypted_filename = filename.replace(".aes", "")
-    enc.decrypt_file(filename, decrypted_filename, decrypted_symmetric_key, app)
+@app.route("/getPublicKey", methods=["GET"])
+def get_public_key():
+    username = request.args.get("user")
+    if not username:
+        return jsonify({"error": "Username is required"})
 
-    if enc.verify_signature(decrypted_filename, app):
-        send_file(
-            os.path.join(app.config["UPLOAD_FOLDER"], decrypted_filename),
-            as_attachment=True,
-        )
-        return redirect(url_for("user"))
+    public_key = db.getPublicKey(username)
+    if not public_key:
+        return jsonify({"error": "Public key not found"})
+    
+    return jsonify({"publicKey": public_key})
+
+@app.route("/getEncryptedSymmetricKey", methods=["GET"])
+def get_encrypted_symmetric_key():
+    # filename = request.args.get("file")
+    # symmetric_key = db.getSymmetricKey(filename) 
+    symmetric_key = "super secret"
+
+    if symmetric_key:
+        return jsonify({"symmetricKey": symmetric_key})
     else:
-        return "Signature verification failed."
+        return jsonify({"error": "Symmetric key not found"}), 404
+
+@app.route("/downloadEncryptedFile", methods=["GET"])
+def download_encrypted_file():
+    filename = request.args.get("file")
+    file_path = os.path.join(app.config["UPLOAD_FOLDER"], filename)
+    
+    if os.path.exists(file_path):
+        with open(file_path, "rb") as file:
+            file_content = file.read()
+        return jsonify({"fileContent": file_content.decode("latin1")})  
+    else:
+        return jsonify({"error": "File not found"}), 404
 
 
 if __name__ == "__main__":
