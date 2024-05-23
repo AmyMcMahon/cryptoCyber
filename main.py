@@ -80,7 +80,7 @@ def create():
         password = request.form["password"]
         public_key = request.form["publicKey"]
         db.createUser(username, password, public_key)
-        return render_template("index.html")  
+        return redirect(url_for("user"))
     return render_template("createAccount.html")
 
 
@@ -133,7 +133,6 @@ def upload_file():
 
     return jsonify({"success": True})
 
-
 @app.route("/getPublicKey", methods=["GET"])
 def get_public_key():
     username = request.args.get("user")
@@ -145,7 +144,6 @@ def get_public_key():
         return jsonify({"error": "Public key not found"})
     
     return jsonify({"publicKey": public_key})
-
 
 @app.route("/getEncryptedSymmetricKey", methods=["GET"])
 def get_encrypted_symmetric_key():

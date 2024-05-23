@@ -7,7 +7,7 @@ class User(UserMixin):
         self.id = id
         self.username = username
         self.password = password
-        self.publin_key = public_key
+        self.public_key = public_key
         self.authenticated = False
 
     def is_active(self):
