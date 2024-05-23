@@ -17,15 +17,9 @@ def generate_key():
     return pub_key_str, private_key_str
 
 
-def hash_password(password):
-    salt = bcrypt.gensalt()
-    hashed = bcrypt.hashpw(password.encode("utf-8"), salt)
-    return hashed
-
-
 # Function to process the uploaded file
 def process_file(filename, key, app):
-    key_string = base64.b64encode(key).decode('utf-8')
+    key_string = base64.b64encode(key).decode("utf-8")
     # Encryption
     encrypt_file(filename, key_string, app)
 
@@ -74,7 +68,7 @@ def verify_signature(filename, app):
         signature = f.read()
     print(content, signature, pub_key)
     return rsa.verify(content, signature, pub_key)
-    
+
 
 # Function to decrypt a file
 def decrypt_file(filename, decrypted_filename, password, app):
@@ -88,12 +82,14 @@ def decrypt_file(filename, decrypted_filename, password, app):
             except ValueError:
                 print("Decryption failed")
 
+
 def make_symmetric_key(receiver_public_key):
     receiver_public_key = rsa.PublicKey.load_pkcs1(receiver_public_key)
     symmetric_key = rsa.randnum.read_random_bits(256)
     encrypted_symmetric_key = rsa.encrypt(symmetric_key, receiver_public_key)
 
     return encrypted_symmetric_key, symmetric_key
+
 
 def unmake_symmetric_key(encrypted_symmetric_key, private_key):
     private_key = rsa.PrivateKey.load_pkcs1(private_key)

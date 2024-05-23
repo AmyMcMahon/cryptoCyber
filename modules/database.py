@@ -1,6 +1,6 @@
 import sqlite3
-import bcrypt
-import modules.encryption as enc
+from Crypto.Hash import SHA256
+import Crypto.Random
 from modules.user import User
 
 
@@ -15,7 +15,14 @@ class Database:
         )
         self.cursor = self.connect.cursor()
 
-    def createUser(self, username, password, salt, public_key):
+    def createUser(self, username, password, public_key):
+        h = SHA256.new()
+        salt = Crypto.Random.get_random_bytes(16)
+        saltedPassword = password.encode("utf-8") + salt
+        h.update(saltedPassword)
+        password = h.hexdigest().encode("utf-8")
+        print("Update PASSWORD", password)
+
         self.cursor.execute(
             "INSERT INTO USERS(username, password, salt, public_key) VALUES (?, ?, ?, ?)",
             (username, password, salt, public_key),
