@@ -101,8 +101,10 @@
         method: 'POST',
         body: formData
       }).then(response => {
+        console.log('Response: ', response);
         if (response.ok) {
           console.log('Account created successfully.');
+          //window.location.replace("/");
         } else {
           console.error('Error creating account.');
         }
