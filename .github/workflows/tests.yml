@@ -29,6 +29,7 @@ jobs:
         pip install flask
         pip install werkzeug
         pip install pycryptodome
+        pip install bycrypt
         pip install pyAesCrypt
         pip install rsa
         pip install flask_login
