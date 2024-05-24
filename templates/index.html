@@ -10,7 +10,7 @@
 <body>
     <main class="container">
         <h1> Login </h1>
-        <form action="/" method="POST" enctype="multipart/form-data">
+        <form enctype="multipart/form-data" id="loginForm">
             <fieldset>
               <label>
                 Username
@@ -34,7 +34,7 @@
               </label>
             <p><strong>{{errorMsg}}</strong></p>
             </fieldset>
-            <button type="submit" class="btn btn-dark btn-sm">Log in</button>
+            <button type="submit" data-target="modal-example" >Log in</button>
           </form>
 
           <article class="pico-background-red-600">
@@ -47,26 +47,13 @@
             </div>
 
           </article>
+
+          {% include 'errorModal.html' %}
       </main>
-  <script>
 
-    document.getElementById('createAccountForm').addEventListener('submit', async (event) => {
-      event.preventDefault();
-
-      const username = event.target.username.value;
-      const password = event.target.password.value;
-
-      const formData = new FormData();
-      formData.append('username', username);
-      formData.append('password', password);
-
-      const response = await fetch('/', {
-        method: 'POST',
-        body: formData,
-      });
-    
-    });
-  </script>
-
+  <script
+  src="{{ url_for('static', filename='js/index.js') }}"
+  type="module"
+></script>
 </body>
 </html>

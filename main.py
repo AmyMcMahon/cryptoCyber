@@ -50,6 +50,7 @@ def load_user(user_id):
 @app.route("/", methods=["POST", "GET"])
 def index():
     if request.method == "POST":
+        print(request)
         username = request.form["username"]
         password = request.form["password"]
         if db.check_Login(username, password):
@@ -57,7 +58,8 @@ def index():
             login_user(userToLogin, remember=False)
             return redirect(url_for("user"))
         else:
-            return render_template("index.html", errorMsg="Invalid Login")
+            print('cant log in')
+            return jsonify(error="Invalid username or password"), 401
     return render_template("index.html")
 
 
@@ -77,13 +79,14 @@ def create():
         public_key = request.form["publicKey"]
         path = os.path.join(app.config["UPLOAD_FOLDER"], username)
         try:
+            #remove user/folder on failue @derv6464
             db.createUser(username, password, public_key)
             os.mkdir(path)
         except Exception as e:
             print(e)
             print("failed to make directory or add to db") 
             #should change error code to be better lol
-            return jsonify({"message": "Error creating account."}),500
+            return {"error": "Error creating account."},500
     
     return render_template("createAccount.html")
 
