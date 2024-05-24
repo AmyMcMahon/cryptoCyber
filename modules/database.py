@@ -51,8 +51,9 @@ class Database:
         return row[0], row[1]
 
     def check_Login(self, username, password):
-        pass_hash, salt = self.getPassword(username)
-        if pass_hash is None:
+        try:
+            pass_hash, salt = self.getPassword(username)
+        except:
             return False
         h = SHA256.new()
         saltedPassword = password.encode("utf-8") + salt

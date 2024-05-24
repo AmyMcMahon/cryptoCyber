@@ -3,6 +3,7 @@
 this is a ISE projec
 
 # TO DO
-[ ] error handling @Derv6464
-[x] file paths @Derv6464
-[ ] sign files @AmyMcMahon
+- [ ] error handling @Derv6464
+- [x] file paths @Derv6464
+- [ ] sign files @AmyMcMahon
+- [ ] remove user/folder on failue @Derv6464
