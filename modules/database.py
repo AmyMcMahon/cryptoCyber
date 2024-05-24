@@ -27,8 +27,8 @@ class Database:
             h.update(saltedPassword)
             password = h.hexdigest().encode("utf-8")
             self.cursor.execute(
-                "INSERT INTO USERS(username, password, public_key) VALUES (?, ?, ?)",
-                (username, password, public_key),
+                "INSERT INTO USERS(username, password, salt, public_key) VALUES (?, ?, ?, ?)",
+                (username, password, salt, public_key),
             )
             self.connect.commit()
         else:
@@ -54,7 +54,6 @@ class Database:
         pass_hash, salt = self.getPassword(username)
         if pass_hash is None:
             return False
-
         h = SHA256.new()
         saltedPassword = password.encode("utf-8") + salt
         h.update(saltedPassword)
