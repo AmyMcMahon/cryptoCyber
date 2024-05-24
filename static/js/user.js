@@ -1,4 +1,4 @@
-    var db;
+var db;
     var idb = window.indexedDB.open("cs4455", 1);
 
     idb.onerror = (event) => {
@@ -163,11 +163,10 @@
       return new Uint8Array(decryptedContent);
     }
 
-    async function downloadFile(fileName, sender) {
+    async function downloadFile(id) {
       try {
         const privateKey = await getPrivateKey();
-
-        const keyResponse = await fetch(`/getEncryptedSymmetricKey?file=${fileName}`);
+        const keyResponse = await fetch(`/getEncryptedSymmetricKey?id=${id}`);
         const keyData = await keyResponse.json();
         if (keyData.error) {
           throw new Error(keyData.error);
