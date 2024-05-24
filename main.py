@@ -1,10 +1,8 @@
-import sqlite3
 from flask import (
     Flask,
     render_template,
     request,
     jsonify,
-    send_file,
     redirect,
     url_for,
 )
@@ -16,12 +14,9 @@ from flask_login import (
     current_user,
     logout_user,
 )
-from flask_session import Session
 import os
-import modules.encryption as enc
 from modules.database import Database
-import rsa
-import base64
+
 
 
 
