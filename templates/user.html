@@ -41,12 +41,12 @@
         <tr>
           <td>{{ file }}</td>
           <td>{{ sender }}</td>
-          <td>{{ id }}</td>
-          <td><button onclick="downloadFile('{{ id }}')">Download</button></td>
+          <td><button id="downloadMe" value='{{ id }}' >Download</button></td>
         </tr>
         {% endfor %}
       </tbody>
     </table>
+    {% include 'errorModal.html' %}
   </main>
 
   <script src="{{ url_for('static', filename='js/user.js') }}" type="module"></script>

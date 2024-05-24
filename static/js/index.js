@@ -20,14 +20,9 @@ document.getElementById('loginForm').addEventListener('submit', async (event) =>
             window.location.replace("/user");
         } else {
             const errorData = await response.json();
-            toggleModal(event, 'Error logging in: ' + errorData.error);
+            toggleModal('Error logging in: ' + errorData.error);
         }
     } catch (error) {
-        toggleModal(event, 'Unknown error');
+        toggleModal('Unknown error');
     }
   });
-
-
-document.getElementById('modal-example').addEventListener('click', (event) => {
-    toggleModal(event);
-});

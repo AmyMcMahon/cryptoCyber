@@ -75,9 +75,9 @@ document.getElementById('createAccountForm').addEventListener('submit', async (e
             window.location.replace("/user");
         } else {
             const errorData = await response.json();
-            toggleModal(event, 'Error logging in: ' + errorData.error);
+            toggleModal('Error logging in: ' + errorData.error);
         }
     } catch (error) {
-        toggleModal(event, 'Unknown error');
+        toggleModal('Unknown error');
     }
 });

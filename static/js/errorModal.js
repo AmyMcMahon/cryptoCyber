@@ -14,8 +14,8 @@ const animationDuration = 400; // ms
 let visibleModal = null;
 
 // Toggle modal
-export const toggleModal = (event, text) => {
-  event.preventDefault();
+export const toggleModal = (text) => {
+  //event.preventDefault();
   const modal = document.getElementById("modal-example");
   const modalContent = document.getElementById("modalContent");
   if (!modal) return;
