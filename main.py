@@ -19,7 +19,6 @@ from modules.database import Database
 
 
 
-
 app = Flask(__name__)
 app.secret_key = "My Secret key"  # Change this to a random string later
 
@@ -87,7 +86,7 @@ def create():
             print("failed to make directory or add to db") 
             #should change error code to be better lol
             return jsonify(error="Failed to create account"), 400
-    
+   
     return render_template("createAccount.html")
 
 
@@ -99,6 +98,7 @@ def user():
     user = current_user.username
     files = db.getUsersFiles(user)
     users = db.getAllUsers()
+    print(files)
     return render_template("user.html", files=files, users=users)
 
 
@@ -133,15 +133,16 @@ def upload_file():
         return jsonify(error="Receiver not found"), 400
 
     username = current_user.username
-    #gets rid of risk of path traversal :)
+    # gets rid of risk of path traversal :)
     filename = secure_filename(file.filename)
     save_path = os.path.join(app.config["UPLOAD_FOLDER"], username)
     if os.path.exists(save_path):
         file_path = os.path.join(save_path, filename)
         file.save(file_path)
-        db.insertFile(username, receiver, file_path, symmetric_key)
+        db.insertFile(username, receiver, file_path, symmetric_key, iv)
         return jsonify({"success": True})
     return jsonify(error="Failed to upload file"), 400
+
 
 @app.route("/getPublicKey", methods=["GET"])
 def get_public_key():
@@ -152,19 +153,20 @@ def get_public_key():
     public_key = db.getPublicKey(username)
     if not public_key:
         return jsonify(error="Public key not found"), 400
-    
     return jsonify({"publicKey": public_key})
+
 
 @app.route("/getEncryptedSymmetricKey", methods=["GET"])
 def get_encrypted_symmetric_key():
-    filename = request.args.get("file")
-    symmetric_key = db.getSymmetricKey(filename) 
-    iv = db.getIv(filename)
+    id = request.args.get("id")
+    symmetric_key, iv = db.getFileKeys(id)
+
     print(symmetric_key)
     if symmetric_key:
         return jsonify({"symmetricKey": symmetric_key, "iv": iv})
     else:
         return jsonify(error="Symmetric key not found"), 404
+
 
 @app.route("/downloadEncryptedFile", methods=["GET"])
 def download_encrypted_file():
@@ -176,7 +178,7 @@ def download_encrypted_file():
     if os.path.exists(file_path):
         with open(file_path, "rb") as file:
             file_content = file.read()
-        return jsonify({"fileContent": file_content.decode("latin1")})  
+        return jsonify({"fileContent": file_content.decode("latin1")})
     else:
         return jsonify(error="File not found"), 404
 
