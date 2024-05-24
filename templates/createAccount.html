@@ -3,6 +3,7 @@
 
 <head>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.indigo.min.css" />
+  <script src="errors.js"></script>
 </head>
 
 <body>
@@ -104,7 +105,7 @@
         console.log('Response: ', response);
         if (response.ok) {
           console.log('Account created successfully.');
-          //window.location.replace("/");
+          window.location.replace("/");
         } else {
           console.error('Error creating account.');
         }
