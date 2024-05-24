@@ -1,6 +1,6 @@
 import unittest
 from modules.database import Database
-from modules.encryption import hash_password
+
 
 class TestDatebase(unittest.TestCase):
     @classmethod
@@ -11,23 +11,24 @@ class TestDatebase(unittest.TestCase):
         self.db.createUser("testreceicer", "testpassword", "testpublickey")
         self.db.insertFile("testsender", "testreceiver", "testfile", "testsymmetrickey", "testiv")
 
-
     def testCheckUserTable(self):
-        user1 = 'testsender'
-        user2 = 'testreceicer'
+        user1 = "testsender"
+        user2 = "testreceicer"
         db1 = self.db.getAllUsersAdmin()[-2:][0]
         db2 = self.db.getAllUsersAdmin()[-2:][1]
         print(db1, db2)
         self.assertEqual(db1[0], user1)
         self.assertEqual(db2[0], user2)
-        
+
     def testCheckFileTable(self):
-        self.assertEqual(self.db.getAllFilesAdmin()[-1],
-                         ('testsender', 'testreceiver', 'testfile'))
+        self.assertEqual(
+            self.db.getAllFilesAdmin()[-1], ("testsender", "testreceiver", "testfile")
+        )
 
     def testCheckFileForUser(self):
-        self.assertEqual(self.db.getUsersFiles("testreceiver")[-1],
-                         ('testsender','testfile'))
+        self.assertEqual(
+            self.db.getUsersFiles("testreceiver")[-1], ("testsender", "testfile")
+        )
 
     @classmethod
     def tearDownClass(self):
@@ -38,5 +39,6 @@ class TestDatebase(unittest.TestCase):
         self.db.cursor.execute("DELETE FROM FILES WHERE receiver = 'testreceiver'")
         self.db.connect.commit()
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()

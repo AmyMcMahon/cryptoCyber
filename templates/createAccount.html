@@ -44,6 +44,7 @@
       );
     }
 
+
     function encodeKey(key) {
       var str = String.fromCharCode.apply(null, new Uint8Array(key));
       var b64 = window.btoa(str);
@@ -95,14 +96,15 @@
       formData.append('username', username);
       formData.append('password', password);
       formData.append('publicKey', publicKeyPem);
-
       // Send the form data
       fetch('/createAccount', {
         method: 'POST',
         body: formData
       }).then(response => {
+        console.log('Response: ', response);
         if (response.ok) {
           console.log('Account created successfully.');
+          //window.location.replace("/");
         } else {
           console.error('Error creating account.');
         }

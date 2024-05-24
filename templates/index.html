@@ -34,7 +34,7 @@
               </label>
             <p><strong>{{errorMsg}}</strong></p>
             </fieldset>
-            <button type="submit" class="btn btn-dark btn-sm">Sign Up</button>
+            <button type="submit" class="btn btn-dark btn-sm">Log in</button>
           </form>
 
           <article class="pico-background-red-600">
@@ -48,6 +48,25 @@
 
           </article>
       </main>
+  <script>
+
+    document.getElementById('createAccountForm').addEventListener('submit', async (event) => {
+      event.preventDefault();
+
+      const username = event.target.username.value;
+      const password = event.target.password.value;
+
+      const formData = new FormData();
+      formData.append('username', username);
+      formData.append('password', password);
+
+      const response = await fetch('/', {
+        method: 'POST',
+        body: formData,
+      });
+    
+    });
+  </script>
 
 </body>
 </html>

@@ -24,6 +24,7 @@ import rsa
 import base64
 
 
+
 app = Flask(__name__)
 app.secret_key = "My Secret key"  # Change this to a random string later
 
@@ -38,7 +39,6 @@ login_manager.login_view = "index"
 login_manager.init_app(app)
 ALLOWED_EXTENSIONS = {"txt"}
 app.config["UPLOAD_FOLDER"] = "uploads"
-app.config["DOWNLOAD_FOLDER"] = "downloads"
 
 
 # Function to check if the file extension is allowed
@@ -77,11 +77,19 @@ def logout():
 @app.route("/createAccount", methods=["POST", "GET"])
 def create():
     if request.method == "POST":
-        username = request.form["username"]
+        username = secure_filename(request.form["username"])
         password = request.form["password"]
         public_key = request.form["publicKey"]
-        db.createUser(username, password, public_key)
-        return render_template("index.html")  
+        path = os.path.join(app.config["UPLOAD_FOLDER"], username)
+        try:
+            db.createUser(username, password, public_key)
+            os.mkdir(path)
+        except Exception as e:
+            print(e)
+            print("failed to make directory or add to db") 
+            #should change error code to be better lol
+            return jsonify({"message": "Error creating account."}),500
+    
     return render_template("createAccount.html")
 
 
@@ -127,13 +135,15 @@ def upload_file():
         return jsonify({"error": "Receiver's public key not found"})
 
     username = current_user.username
+    #gets rid of risk of path traversal :)
     filename = secure_filename(file.filename)
-    filePath = os.path.join(app.config["UPLOAD_FOLDER"], filename)
-    file.save(filePath)
-    db.insertFile(username, receiver, filename, symmetric_key, iv)
-
-    return jsonify({"success": True})
-
+    save_path = os.path.join(app.config["UPLOAD_FOLDER"], username)
+    if os.path.exists(save_path):
+        file_path = os.path.join(save_path, filename)
+        file.save(file_path)
+        db.insertFile(username, receiver, file_path, symmetric_key)
+        return jsonify({"success": True})
+    return jsonify({"error": "Failed to upload file"})
 
 @app.route("/getPublicKey", methods=["GET"])
 def get_public_key():
@@ -146,7 +156,6 @@ def get_public_key():
         return jsonify({"error": "Public key not found"})
     
     return jsonify({"publicKey": public_key})
-
 
 @app.route("/getEncryptedSymmetricKey", methods=["GET"])
 def get_encrypted_symmetric_key():
@@ -162,8 +171,10 @@ def get_encrypted_symmetric_key():
 @app.route("/downloadEncryptedFile", methods=["GET"])
 def download_encrypted_file():
     filename = request.args.get("file")
-    file_path = os.path.join(app.config["UPLOAD_FOLDER"], filename)
-    
+    username = current_user.username
+    save_path = os.path.join(app.config["UPLOAD_FOLDER"], username)
+    file_path = os.path.join(save_path, filename)
+
     if os.path.exists(file_path):
         with open(file_path, "rb") as file:
             file_content = file.read()
