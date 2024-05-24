@@ -100,6 +100,7 @@ def user():
     user = current_user.username
     files = db.getUsersFiles(user)
     users = db.getAllUsers()
+    print(files)
     return render_template("user.html", files=files, users=users)
 
 
@@ -160,9 +161,9 @@ def get_public_key():
 
 @app.route("/getEncryptedSymmetricKey", methods=["GET"])
 def get_encrypted_symmetric_key():
-    filename = request.args.get("file")
-    symmetric_key = db.getSymmetricKey(filename)
-    iv = db.getIv(filename)
+    id = request.args.get("id")
+    symmetric_key, iv = db.getFileKeys(id)
+
     print(symmetric_key)
     if symmetric_key:
         return jsonify({"symmetricKey": symmetric_key, "iv": iv})

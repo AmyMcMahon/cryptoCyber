@@ -97,30 +97,24 @@ class Database:
         rows = self.cursor.fetchall()
         return rows
 
+    #returns only file path
     def getUsersFiles(self, username):
         self.cursor.execute(
-            'SELECT sender, file_path FROM FILES WHERE receiver = "' + username + '"'
+            'SELECT sender, file_path, id FROM FILES WHERE receiver = "' + username + '"'
         )
         rows = self.cursor.fetchall()
         clean_rows = []
-        for sender, file_path in rows:
+        for sender, file_path, id in rows:
             file_path = file_path.split("/")[-1]
-            clean_rows.append((sender, file_path))
+            clean_rows.append((sender, file_path, id))
         return clean_rows
 
-    def getSymmetricKey(self, file_path):
+    def getFileKeys(self, id):
         self.cursor.execute(
-            'SELECT symmetric_key FROM FILES WHERE file_path = "' + file_path + '"'
+            'SELECT symmetric_key, iv FROM FILES WHERE id = "' + id + '"'
         )
         row = self.cursor.fetchone()
-        return row[0]
-
-    def getIv(self, file_path):
-        self.cursor.execute(
-            'SELECT iv FROM FILES WHERE file_path = "' + file_path + '"'
-        )
-        row = self.cursor.fetchone()
-        return row[0]
+        return row[0], row[1]
 
     # maybe get rid of this ltr
     def getAllFilesAdmin(self):
@@ -131,3 +125,5 @@ class Database:
             file_path = file_path.split("/")[-1]
             clean_rows.append((sender, receiver, file_path))
         return clean_rows
+
+

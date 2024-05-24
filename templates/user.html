@@ -37,11 +37,12 @@
         </tr>
       </thead>
       <tbody>
-        {% for sender, file in files %}
+        {% for sender, file, id in files %}
         <tr>
           <td>{{ file }}</td>
           <td>{{ sender }}</td>
-          <td><button onclick="downloadFile('{{ file }}', '{{ sender }}')">Download</button></td>
+          <td>{{ id }}</td>
+          <td><button onclick="downloadFile('{{ id }}')">Download</button></td>
         </tr>
         {% endfor %}
       </tbody>
@@ -214,11 +215,10 @@
       return new Uint8Array(decryptedContent);
     }
 
-    async function downloadFile(fileName, sender) {
+    async function downloadFile(id) {
       try {
         const privateKey = await getPrivateKey();
-
-        const keyResponse = await fetch(`/getEncryptedSymmetricKey?file=${fileName}`);
+        const keyResponse = await fetch(`/getEncryptedSymmetricKey?id=${id}`);
         const keyData = await keyResponse.json();
         if (keyData.error) {
           throw new Error(keyData.error);
