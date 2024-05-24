@@ -152,7 +152,6 @@
         formData.append("iv", btoa(String.fromCharCode.apply(null, iv)));
         formData.append("encryptedSymmetricKey", btoa(String.fromCharCode.apply(null, encryptedSymmetricKey)));
         formData.append("select", receiver);
-
         const uploadResponse = await fetch("/upload", {
           method: "POST",
           body: formData
@@ -171,7 +170,7 @@
     document.getElementById("uploadForm").addEventListener("submit", handleUpload);
 
     async function decryptSymmetricKey(privateKey, encryptedSymmetricKey) {
-      const encryptedKeyBuffer = Uint8Array.from(atob(encryptedSymmetricKey), c => c.charCodeAt(0)).buffer;
+      const encryptedKeyBuffer = base64ToArrayBuffer(encryptedSymmetricKey);
       const decryptedKey = await window.crypto.subtle.decrypt(
         {
           name: "RSA-OAEP"
@@ -183,44 +182,51 @@
       return new Uint8Array(decryptedKey);
     }
 
-    async function decryptFile(encryptedFileContent, symmetricKey, iv) {
-      const algorithm = {
-        name: "AES-GCM",
-        iv: Uint8Array.from(atob(iv), c => c.charCodeAt(0))
-      };
+    function base64ToArrayBuffer(base64) {
+      const binaryString = window.btoa(base64);
+      const len = binaryString.length;
+      const bytes = new Uint8Array(len);
+      for (let i = 0; i < len; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
+      }
+      return bytes.buffer;
+    }
 
-      const key = await window.crypto.subtle.importKey(
+    async function decryptFile(encryptedFileContentBase64, symmetricKeyBase64, ivBase64) {
+      const symmetricKeyArrayBuffer = base64ToArrayBuffer(symmetricKeyBase64);
+      const ivArrayBuffer = base64ToArrayBuffer(ivBase64);
+      const encryptedFileArrayBuffer = base64ToArrayBuffer(encryptedFileContentBase64);
+
+      const importedSymmetricKey = await window.crypto.subtle.importKey(
         "raw",
-        symmetricKey,
-        algorithm,
-        false,
+        symmetricKeyArrayBuffer,
+        { name: "AES-GCM" },
+        true,
         ["decrypt"]
       );
 
-      const encryptedFileBuffer = Uint8Array.from(atob(encryptedFileContent), c => c.charCodeAt(0)).buffer;
       const decryptedContent = await window.crypto.subtle.decrypt(
-        algorithm,
-        key,
-        encryptedFileBuffer
+        { name: "AES-GCM", iv: new Uint8Array(ivArrayBuffer) },
+        importedSymmetricKey,
+        encryptedFileArrayBuffer
       );
 
-      return new TextDecoder().decode(decryptedContent);
+      return new Uint8Array(decryptedContent);
     }
 
     async function downloadFile(fileName, sender) {
       try {
         const privateKey = await getPrivateKey();
 
-        const keyResponse = await fetch(`/getEncryptedSymmetricKey?file=${fileName}&sender=${sender}`);
+        const keyResponse = await fetch(`/getEncryptedSymmetricKey?file=${fileName}`);
         const keyData = await keyResponse.json();
         if (keyData.error) {
           throw new Error(keyData.error);
         }
         const encryptedSymmetricKey = keyData.symmetricKey;
-        console.log(encryptedSymmetricKey);
         const iv = keyData.iv;
-        console.log(keyData);
         const symmetricKey = await decryptSymmetricKey(privateKey, encryptedSymmetricKey);
+        const decryptedIv = new Uint8Array(atob(iv).split('').map(char => char.charCodeAt(0)));
 
         const fileResponse = await fetch(`/downloadEncryptedFile?file=${fileName}`);
         const fileData = await fileResponse.json();
@@ -229,13 +235,13 @@
         }
         const encryptedFileContent = fileData.fileContent;
 
-        const decryptedContent = await decryptFile(encryptedFileContent, symmetricKey, iv);
-
+        const decryptedContent = await decryptFile(encryptedFileContent, symmetricKey, decryptedIv);
         const blob = new Blob([decryptedContent], { type: 'text/plain' });
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.style.display = 'none';
         a.href = url;  
+        a.download = fileName; // Fix: Add file name for download
         document.body.appendChild(a);
         a.click();
         window.URL.revokeObjectURL(url);
