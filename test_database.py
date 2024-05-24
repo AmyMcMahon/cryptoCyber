@@ -1,5 +1,6 @@
 import unittest
 from modules.database import Database
+import os
 
 
 class TestDatebase(unittest.TestCase):
@@ -27,7 +28,7 @@ class TestDatebase(unittest.TestCase):
 
     def testCheckFileForUser(self):
         self.assertEqual(
-            self.db.getUsersFiles("testreceiver")[-1], ("testsender", "testfile")
+            self.db.getUsersFiles("testreceiver")[-1], ("testsender", "testfile", 1)
         )
 
     @classmethod
@@ -37,6 +38,7 @@ class TestDatebase(unittest.TestCase):
         self.db.cursor.execute("DELETE FROM USERS WHERE username = 'testreceiver'")
         self.db.cursor.execute("DELETE FROM FILES WHERE sender = 'testsender'")
         self.db.cursor.execute("DELETE FROM FILES WHERE receiver = 'testreceiver'")
+       # os.remove
         self.db.connect.commit()
 
 

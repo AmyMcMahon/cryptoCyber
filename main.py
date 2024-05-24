@@ -1,10 +1,8 @@
-import sqlite3
 from flask import (
     Flask,
     render_template,
     request,
     jsonify,
-    send_file,
     redirect,
     url_for,
 )
@@ -16,12 +14,9 @@ from flask_login import (
     current_user,
     logout_user,
 )
-from flask_session import Session
 import os
-import modules.encryption as enc
 from modules.database import Database
-import rsa
-import base64
+
 
 
 app = Flask(__name__)
@@ -54,6 +49,7 @@ def load_user(user_id):
 @app.route("/", methods=["POST", "GET"])
 def index():
     if request.method == "POST":
+        print(request)
         username = request.form["username"]
         password = request.form["password"]
         if db.check_Login(username, password):
@@ -61,7 +57,8 @@ def index():
             login_user(userToLogin, remember=False)
             return redirect(url_for("user"))
         else:
-            return render_template("index.html", errorMsg="Invalid Login")
+            print('cant log in')
+            return jsonify(error="Invalid username or password"), 401
     return render_template("index.html")
 
 
@@ -80,15 +77,18 @@ def create():
         password = request.form["password"]
         public_key = request.form["publicKey"]
         path = os.path.join(app.config["UPLOAD_FOLDER"], username)
+        if os.path.exists(path):
+            return jsonify(error="Nope"), 400
         try:
+            #remove user/folder on failue @derv6464
             db.createUser(username, password, public_key)
             os.mkdir(path)
         except Exception as e:
             print(e)
-            print("failed to make directory or add to db")
-            # should change error code to be better lol
-            return jsonify({"message": "Error creating account."}), 500
-
+            print("failed to make directory or add to db") 
+            #should change error code to be better lol
+            return jsonify(error="Failed to create account"), 400
+   
     return render_template("createAccount.html")
 
 
@@ -100,6 +100,7 @@ def user():
     user = current_user.username
     files = db.getUsersFiles(user)
     users = db.getAllUsers()
+    print(files)
     return render_template("user.html", files=files, users=users)
 
 
@@ -116,22 +117,22 @@ def admin():
 @app.route("/upload", methods=["POST"])
 def upload_file():
     if "file" not in request.files:
-        return jsonify({"error": "No file part"})
+        return jsonify(error="No file part"), 400
     if "encryptedSymmetricKey" not in request.form:
-        return jsonify({"error": "No symmetric key provided"})
+        return jsonify(error="No symmetric key"), 400
     if "select" not in request.form:
-        return jsonify({"error": "No receiver selected"})
+        return jsonify(error="No receiver selected"), 400
     file = request.files["file"]
     symmetric_key = request.form["encryptedSymmetricKey"]
     receiver = request.form["select"]
     iv = request.form["iv"]
 
     if file.filename == "":
-        return jsonify({"error": "No selected file"})
+        return jsonify(error="No selected file"), 400
     if not allowed_file_type(file.filename):
-        return jsonify({"error": "File type not allowed"})
+        return jsonify(error="Invalid file type"), 400
     if not db.getPublicKey(receiver):
-        return jsonify({"error": "Receiver's public key not found"})
+        return jsonify(error="Receiver not found"), 400
 
     username = current_user.username
     # gets rid of risk of path traversal :)
@@ -142,32 +143,31 @@ def upload_file():
         file.save(file_path)
         db.insertFile(username, receiver, file_path, symmetric_key, iv)
         return jsonify({"success": True})
-    return jsonify({"error": "Failed to upload file"})
+    return jsonify(error="Failed to upload file"), 400
 
 
 @app.route("/getPublicKey", methods=["GET"])
 def get_public_key():
     username = request.args.get("user")
     if not username:
-        return jsonify({"error": "Username is required"})
+        return jsonify(error="No user provided"), 400
 
     public_key = db.getPublicKey(username)
     if not public_key:
-        return jsonify({"error": "Public key not found"})
-
+        return jsonify(error="Public key not found"), 400
     return jsonify({"publicKey": public_key})
 
 
 @app.route("/getEncryptedSymmetricKey", methods=["GET"])
 def get_encrypted_symmetric_key():
-    filename = request.args.get("file")
-    symmetric_key = db.getSymmetricKey(filename)
-    iv = db.getIv(filename)
+    id = request.args.get("id")
+    symmetric_key, iv = db.getFileKeys(id)
+
     print(symmetric_key)
     if symmetric_key:
         return jsonify({"symmetricKey": symmetric_key, "iv": iv})
     else:
-        return jsonify({"error": "Symmetric key not found"}), 404
+        return jsonify(error="Symmetric key not found"), 404
 
 
 @app.route("/downloadEncryptedFile", methods=["GET"])
@@ -182,7 +182,7 @@ def download_encrypted_file():
             file_content = file.read()
         return jsonify({"fileContent": file_content.decode("latin1")})
     else:
-        return jsonify({"error": "File not found"}), 404
+        return jsonify(error="File not found"), 404
 
 
 if __name__ == "__main__":
