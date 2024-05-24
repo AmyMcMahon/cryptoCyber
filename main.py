@@ -77,6 +77,8 @@ def create():
         password = request.form["password"]
         public_key = request.form["publicKey"]
         path = os.path.join(app.config["UPLOAD_FOLDER"], username)
+        if os.path.exists(path):
+            return jsonify(error="Nope"), 400
         try:
             #remove user/folder on failue @derv6464
             db.createUser(username, password, public_key)
