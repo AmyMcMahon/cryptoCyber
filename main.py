@@ -20,6 +20,9 @@ from flask_session import Session
 import os
 import modules.encryption as enc
 from modules.database import Database
+import rsa
+import base64
+
 
 
 app = Flask(__name__)
