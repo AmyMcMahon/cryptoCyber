@@ -1,7 +1,6 @@
 import sqlite3
-from Crypto.Hash import SHA256
-import Crypto.Random
 from modules.user import User
+import bcrypt
 
 
 class Database:
@@ -21,14 +20,12 @@ class Database:
         )
         row = self.cursor.fetchone()
         if row is None:
-            h = SHA256.new()
-            salt = Crypto.Random.get_random_bytes(16)
-            saltedPassword = password.encode("utf-8") + salt
-            h.update(saltedPassword)
-            password = h.hexdigest().encode("utf-8")
+            salt = bcrypt.gensalt(rounds=16)
+            hash_pass = bcrypt.hashpw(password.encode("utf-8"), salt)
+            print(hash_pass)
             self.cursor.execute(
-                "INSERT INTO USERS(username, password, salt, public_key) VALUES (?, ?, ?, ?)",
-                (username, password, salt, public_key),
+                "INSERT INTO USERS(username, password, public_key) VALUES ( ?, ?, ?)",
+                (username, hash_pass, public_key),
             )
             self.connect.commit()
         else:
@@ -48,17 +45,15 @@ class Database:
         row = self.cursor.fetchone()
         if row is None:
             return None
-        return row[0], row[1]
+        return row[0]
 
     def check_Login(self, username, password):
-        pass_hash, salt = self.getPassword(username)
+        pass_hash = self.getPassword(username)
+        userPass = password.encode("utf-8")
+        result = bcrypt.checkpw(userPass, pass_hash)
         if pass_hash is None:
             return False
-        h = SHA256.new()
-        saltedPassword = password.encode("utf-8") + salt
-        h.update(saltedPassword)
-        passwordLogin = h.hexdigest().encode("utf-8")
-        if pass_hash == passwordLogin:
+        if result:
             return True
         else:
             return False
