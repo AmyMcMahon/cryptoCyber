@@ -112,6 +112,13 @@ class Database:
         row = self.cursor.fetchone()
         return row[0], row[1]
 
+    def getFilePath(self, id):
+        self.cursor.execute(
+            'SELECT file_path FROM FILES WHERE id = "' + id + '"'
+        )
+        row = self.cursor.fetchone()
+        return row[0]
+
     # maybe get rid of this ltr
     def getAllFilesAdmin(self):
         self.cursor.execute("SELECT sender, receiver, file_path FROM FILES")
