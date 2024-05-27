@@ -201,9 +201,10 @@ async function downloadFile(id, fileName) {
     if (!fileResponse.ok) {
       throw new Error('Failed to download file');
     }
-    const blob = await fileResponse.blob();
-    console.log(blob);
-    const encryptedFileContent = new Uint8Array(await blob.arrayBuffer());
+    const responseData = await fileResponse.json();
+    console.log(responseData);
+    const encryptedFileContent = new Uint8Array(base64ToArrayBuffer(responseData.fileContent));
+    console.log(encryptedFileContent);
     const decryptedContent = await decryptFile(encryptedFileContent, symmetricKey, decryptedIv);
     const decryptedBlob = new Blob([decryptedContent], { type: 'text/plain' });
     const url = window.URL.createObjectURL(decryptedBlob);

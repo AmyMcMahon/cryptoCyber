@@ -1,3 +1,4 @@
+import base64
 from flask import (
     Flask,
     render_template,
@@ -178,7 +179,8 @@ def download_encrypted_file():
     if os.path.exists(file_path):
         with open(file_path, "rb") as file:
             file_content = file.read()
-        return jsonify({"fileContent": file_content.decode("latin1")})
+        file_content_base64 = base64.b64encode(file_content).decode("utf-8")
+        return jsonify({"fileContent": file_content_base64})
     else:
         return jsonify(error="File not found"), 404
 
