@@ -40,6 +40,15 @@ async function encryptFile(file) {
     ["encrypt", "decrypt"]
   );
 
+  const signingKey = await window.crypto.subtle.generateKey(
+    {
+      name: "ECDSA",
+      namedCurve: "P-384"
+    },
+    true,
+    ["sign", "verify"]
+  );
+
   const iv = window.crypto.getRandomValues(new Uint8Array(12));
   const encryptedContent = await window.crypto.subtle.encrypt(
     { name: "AES-GCM", iv: iv },
@@ -48,9 +57,11 @@ async function encryptFile(file) {
   );
 
   const exportedSymmetricKey = await window.crypto.subtle.exportKey("raw", symmetricKey);
+  const signature = await signFile(encryptedContent, signingKey.privateKey);
 
   return {
     encryptedContent: new Uint8Array(encryptedContent),
+    signature: new Uint8Array(signature),
     iv: iv,
     symmetricKey: exportedSymmetricKey
   };
@@ -72,6 +83,18 @@ async function encryptSymmetricKey(publicKey, symmetricKey) {
   );
 
   return new Uint8Array(encryptedSymmetricKey);
+}
+
+async function signFile(file, signingKey){
+  let signature = await window.crypto.subtle.sign(
+    {
+      name: "ECDSA",
+      hash: { name: "SHA-384" },
+    },
+    signingKey,
+    file,
+  );
+  return signature;
 }
 
 async function handleUpload(event) {
@@ -96,11 +119,12 @@ async function handleUpload(event) {
     }
 
     const publicKey = data.publicKey;
-    const { encryptedContent, iv, symmetricKey } = await encryptFile(file);
+    const { encryptedContent, signature, iv, symmetricKey } = await encryptFile(file);
     const encryptedSymmetricKey = await encryptSymmetricKey(publicKey, symmetricKey);
 
     const formData = new FormData();
     formData.append("file", new Blob([encryptedContent], { type: file.type }), file.name);
+    formData.append("signedFile", btoa(signature));
     formData.append("iv", arrayBufferToBase64(iv));
     formData.append("encryptedSymmetricKey", arrayBufferToBase64(encryptedSymmetricKey));
     formData.append("select", receiver);
@@ -108,6 +132,8 @@ async function handleUpload(event) {
       method: "POST",
       body: formData
     });
+
+    console.log(uploadResponse);
 
     if (uploadResponse.ok) {
       alert("File uploaded successfully.");
@@ -179,6 +205,20 @@ async function decryptFile(encryptedFileContent, symmetricKey, iv) {
     encryptedFileContent
   )
   return new Uint8Array(decryptedContent);
+}
+
+async function verifyFile(file, signature, publicKey){
+  let isVerified = await window.crypto.subtle.verify(
+    {
+      name: "ECDSA",
+      hash: { name: "SHA-384" },
+    },
+    publicKey,
+    signature,
+    file
+  );
+
+  return isVerified;
 }
 
 async function downloadFile(id, fileName) {
