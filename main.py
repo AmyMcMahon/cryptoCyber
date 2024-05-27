@@ -1,3 +1,4 @@
+import base64
 from flask import (
     Flask,
     render_template,
@@ -174,15 +175,14 @@ def get_encrypted_symmetric_key():
 
 @app.route("/downloadEncryptedFile", methods=["GET"])
 def download_encrypted_file():
-    filename = request.args.get("file")
-    username = current_user.username
-    save_path = os.path.join(app.config["UPLOAD_FOLDER"], username)
-    file_path = os.path.join(save_path, filename)
+    id = request.args.get("id")
+    file_path = db.getFilePath(id)
 
     if os.path.exists(file_path):
         with open(file_path, "rb") as file:
             file_content = file.read()
-        return jsonify({"fileContent": file_content.decode("latin1")})
+        file_content_base64 = base64.b64encode(file_content).decode("utf-8")
+        return jsonify({"fileContent": file_content_base64})
     else:
         return jsonify(error="File not found"), 404
 

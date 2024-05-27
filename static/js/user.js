@@ -125,8 +125,8 @@ async function handleUpload(event) {
     const formData = new FormData();
     formData.append("file", new Blob([encryptedContent], { type: file.type }), file.name);
     formData.append("signedFile", btoa(signature));
-    formData.append("iv", btoa(String.fromCharCode.apply(null, iv)));
-    formData.append("encryptedSymmetricKey", btoa(String.fromCharCode.apply(null, encryptedSymmetricKey)));
+    formData.append("iv", arrayBufferToBase64(iv));
+    formData.append("encryptedSymmetricKey", arrayBufferToBase64(encryptedSymmetricKey));
     formData.append("select", receiver);
     const uploadResponse = await fetch("/upload", {
       method: "POST",
@@ -147,20 +147,20 @@ async function handleUpload(event) {
 
 document.getElementById("uploadForm").addEventListener("submit", handleUpload);
 
-//download section
-async function decryptSymmetricKey(privateKey, encryptedSymmetricKey) {
-  const encryptedKeyBuffer = base64ToArrayBuffer(encryptedSymmetricKey);
-  const decryptedKey = await window.crypto.subtle.decrypt(
-    {name: "RSA-OAEP"},
-    privateKey,
-    encryptedKeyBuffer
-  );
-
-  return new Uint8Array(decryptedKey);
+// Convert Uint8Array to Base64 String
+function arrayBufferToBase64(buffer) {
+  let binary = '';
+  const bytes = new Uint8Array(buffer);
+  const len = bytes.byteLength;
+  for (let i = 0; i < len; i++) {
+    binary += String.fromCharCode(bytes[i]);
+  }
+  return window.btoa(binary);
 }
 
+// Convert Base64 String to ArrayBuffer
 function base64ToArrayBuffer(base64) {
-  const binaryString = window.btoa(base64);
+  const binaryString = window.atob(base64);
   const len = binaryString.length;
   const bytes = new Uint8Array(len);
   for (let i = 0; i < len; i++) {
@@ -169,21 +169,40 @@ function base64ToArrayBuffer(base64) {
   return bytes.buffer;
 }
 
-async function decryptFile(encryptedFileContentBase64, symmetricKeyBase64, ivBase64) {
-  const symmetricKeyArrayBuffer = base64ToArrayBuffer(symmetricKeyBase64);
-  const ivArrayBuffer = base64ToArrayBuffer(ivBase64);
-  const encryptedFileArrayBuffer = base64ToArrayBuffer(encryptedFileContentBase64)
+async function blobToArrayBuffer(blob) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => resolve(reader.result);
+    reader.onerror = reject;
+    reader.readAsArrayBuffer(blob);
+  });
+}
+
+
+//download section
+async function decryptSymmetricKey(privateKey, encryptedSymmetricKey) {
+  const encryptedKeyBuffer = base64ToArrayBuffer(encryptedSymmetricKey);
+  const decryptedKey = await window.crypto.subtle.decrypt(
+    { name: "RSA-OAEP" },
+    privateKey,
+    encryptedKeyBuffer
+  );
+
+  return new Uint8Array(decryptedKey);
+}
+
+async function decryptFile(encryptedFileContent, symmetricKey, iv) {
   const importedSymmetricKey = await window.crypto.subtle.importKey(
     "raw",
-    symmetricKeyArrayBuffer,
+    symmetricKey,
     { name: "AES-GCM" },
     true,
     ["decrypt"]
   )
   const decryptedContent = await window.crypto.subtle.decrypt(
-    { name: "AES-GCM", iv: new Uint8Array(ivArrayBuffer) },
+    { name: "AES-GCM", iv: iv },
     importedSymmetricKey,
-    encryptedFileArrayBuffer
+    encryptedFileContent
   )
   return new Uint8Array(decryptedContent);
 }
@@ -202,7 +221,7 @@ async function verifyFile(file, signature, publicKey){
   return isVerified;
 }
 
-async function downloadFile(id) {
+async function downloadFile(id, fileName) {
   try {
     const privateKey = await getPrivateKey();
     const keyResponse = await fetch(`/getEncryptedSymmetricKey?id=${id}`);
@@ -212,21 +231,27 @@ async function downloadFile(id) {
     }
     const encryptedSymmetricKey = keyData.symmetricKey;
     const iv = keyData.iv;
+    console.log(encryptedSymmetricKey);
+    console.log(iv);
     const symmetricKey = await decryptSymmetricKey(privateKey, encryptedSymmetricKey);
-    const decryptedIv = new Uint8Array(atob(iv).split('').map(char => char.charCodeAt(0)))
-    const fileResponse = await fetch(`/downloadEncryptedFile?file=${fileName}`);
-    const fileData = await fileResponse.json();
-    if (fileData.error) {
-      throw new Error(fileData.error);
+    console.log(symmetricKey);
+    const decryptedIv = new Uint8Array(base64ToArrayBuffer(iv));
+    console.log(decryptedIv);
+    const fileResponse = await fetch(`/downloadEncryptedFile?id=${id}`);
+    if (!fileResponse.ok) {
+      throw new Error('Failed to download file');
     }
-    const encryptedFileContent = fileData.fileContent
+    const responseData = await fileResponse.json();
+    console.log(responseData);
+    const encryptedFileContent = new Uint8Array(base64ToArrayBuffer(responseData.fileContent));
+    console.log(encryptedFileContent);
     const decryptedContent = await decryptFile(encryptedFileContent, symmetricKey, decryptedIv);
-    const blob = new Blob([decryptedContent], { type: 'text/plain' });
-    const url = window.URL.createObjectURL(blob);
+    const decryptedBlob = new Blob([decryptedContent], { type: 'text/plain' });
+    const url = window.URL.createObjectURL(decryptedBlob);
     const a = document.createElement('a');
     a.style.display = 'none';
-    a.href = url;  
-    a.download = fileName; // Fix: Add file name for download
+    a.href = url;
+    a.download = fileName;
     document.body.appendChild(a);
     a.click();
     window.URL.revokeObjectURL(url);
@@ -235,6 +260,7 @@ async function downloadFile(id) {
     console.error('Error during decryption:', error);
   }
 }
+
 
 document.getElementById('downloadMe').addEventListener('click', (event) => {
   downloadFile(event.target.value);
