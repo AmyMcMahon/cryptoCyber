@@ -10,7 +10,7 @@ class Database:
             "CREATE TABLE IF NOT EXISTS USERS (username TEXT, password TEXT, salt TEXT, public_key TEXT, id INTEGER PRIMARY KEY AUTOINCREMENT)"
         )
         self.connect.execute(
-            "CREATE TABLE IF NOT EXISTS FILES (sender TEXT, receiver TEXT, file_path TEXT, id INTEGER PRIMARY KEY AUTOINCREMENT, symmetric_key TEXT, iv TEXT)"
+            "CREATE TABLE IF NOT EXISTS FILES (sender TEXT, receiver TEXT, file_path TEXT, id INTEGER PRIMARY KEY AUTOINCREMENT, symmetric_key TEXT, signed_file, iv TEXT)"
         )
         self.cursor = self.connect.cursor()
 
@@ -75,10 +75,11 @@ class Database:
         else:
             return None
 
-    def insertFile(self, sender, receiver, file_path, symmetric_key, iv):
+    def insertFile(self, sender, receiver, file_path, symmetric_key, signed_file, iv):
+        print(type(signed_file))
         self.cursor.execute(
-            "INSERT INTO FILES(sender, receiver, file_path, symmetric_key, iv) VALUES (?, ?, ?, ?, ?)",
-            (sender, receiver, file_path, symmetric_key, iv),
+            "INSERT INTO FILES(sender, receiver, file_path, symmetric_key, signed_file, iv) VALUES (?, ?, ?, ?, ?, ?)",
+            (sender, receiver, file_path, symmetric_key, str(signed_file), iv),
         )
         self.connect.commit()
 
@@ -93,10 +94,12 @@ class Database:
         rows = self.cursor.fetchall()
         return rows
 
-    #returns only file path
+    # returns only file path
     def getUsersFiles(self, username):
         self.cursor.execute(
-            'SELECT sender, file_path, id FROM FILES WHERE receiver = "' + username + '"'
+            'SELECT sender, file_path, id FROM FILES WHERE receiver = "'
+            + username
+            + '"'
         )
         rows = self.cursor.fetchall()
         clean_rows = []
@@ -121,5 +124,3 @@ class Database:
             file_path = file_path.split("/")[-1]
             clean_rows.append((sender, receiver, file_path))
         return clean_rows
-
-

@@ -18,7 +18,6 @@ import os
 from modules.database import Database
 
 
-
 app = Flask(__name__)
 app.secret_key = "My Secret key"  # Change this to a random string later
 
@@ -57,7 +56,7 @@ def index():
             login_user(userToLogin, remember=False)
             return redirect(url_for("user"))
         else:
-            print('cant log in')
+            print("cant log in")
             return jsonify(error="Invalid username or password"), 401
     return render_template("index.html")
 
@@ -80,15 +79,15 @@ def create():
         if os.path.exists(path):
             return jsonify(error="Nope"), 400
         try:
-            #remove user/folder on failue @derv6464
+            # remove user/folder on failue @derv6464
             db.createUser(username, password, public_key)
             os.mkdir(path)
         except Exception as e:
             print(e)
-            print("failed to make directory or add to db") 
-            #should change error code to be better lol
+            print("failed to make directory or add to db")
+            # should change error code to be better lol
             return jsonify(error="Failed to create account"), 400
-   
+
     return render_template("createAccount.html")
 
 
@@ -122,8 +121,11 @@ def upload_file():
         return jsonify(error="No symmetric key"), 400
     if "select" not in request.form:
         return jsonify(error="No receiver selected"), 400
+    if "signedFile" not in request.files:
+        return jsonify(error="No signed file"), 400
     file = request.files["file"]
     symmetric_key = request.form["encryptedSymmetricKey"]
+    signed_file = request.form["signedFile"]
     receiver = request.form["select"]
     iv = request.form["iv"]
 
@@ -141,7 +143,7 @@ def upload_file():
     if os.path.exists(save_path):
         file_path = os.path.join(save_path, filename)
         file.save(file_path)
-        db.insertFile(username, receiver, file_path, symmetric_key, iv)
+        db.insertFile(username, receiver, file_path, symmetric_key, signed_file, iv)
         return jsonify({"success": True})
     return jsonify(error="Failed to upload file"), 400
 
