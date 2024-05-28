@@ -1,7 +1,7 @@
 import { toggleModal } from './errorModal.js';
 
 async function genKey() {
-    return await window.crypto.subtle.generateKey(
+    const encrytKey =  await window.crypto.subtle.generateKey(
       {
         name: "RSA-OAEP",
         modulusLength: 2048,
@@ -11,6 +11,20 @@ async function genKey() {
       true,
       ["encrypt", "decrypt"]
     );
+
+    const signingKey = await window.crypto.subtle.generateKey(
+      {
+        name: "ECDSA",
+        namedCurve: "P-384"
+      },
+      true,
+      ["sign", "verify"]
+    );
+    console.log("genertating key pair")
+    console.log(encrytKey);
+    console.log(signingKey);
+    return [encrytKey, signingKey];
+    
   }
 
 
@@ -50,20 +64,25 @@ document.getElementById('createAccountForm').addEventListener('submit', async (e
     const password = event.target.password.value;
 
     // Generate the key pair
-    const keyPair = await genKey();
+    let keys = await genKey();
+    let keyPair = keys[0];
+    let signPair = keys[1];
 
     // Save the key pair to IndexedDB
     let transaction = db.transaction(["dh-key"], "readwrite");
     let store = transaction.objectStore("dh-key");
     store.put({ id: 1, value: keyPair });
+    store.put({ id: 2, value: signPair });
 
     // Export the public key to include in the form
     const publicKeyPem = await exportPublicKey(keyPair.publicKey);
+    const signPublicKeyPem = await exportPublicKey(signPair.publicKey);
 
     const formData = new FormData();
     formData.append('username', username);
     formData.append('password', password);
     formData.append('publicKey', publicKeyPem);
+    formData.append('signPublicKey', signPublicKeyPem);
 
     try {
         const response = await fetch('/createAccount', {

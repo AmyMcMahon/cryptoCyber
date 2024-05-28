@@ -32,6 +32,26 @@ async function getPrivateKey() {
   });
 }
 
+async function getSigningKey() {
+  return new Promise((resolve, reject) => {
+    let transaction = db.transaction(["dh-key"], "readonly");
+    let store = transaction.objectStore("dh-key");
+    let request = store.get(2);
+
+    request.onsuccess = (event) => {
+      if (request.result) {
+        resolve(request.result.value.privateKey);
+      } else {
+        reject("Private key not found in IndexedDB");
+      }
+    };
+
+    request.onerror = (event) => {
+      reject("Error retrieving private key from IndexedDB");
+    };
+  });
+}
+
 //upload section
 async function encryptFile(file) {
   const symmetricKey = await window.crypto.subtle.generateKey(
@@ -40,14 +60,8 @@ async function encryptFile(file) {
     ["encrypt", "decrypt"]
   );
 
-  const signingKey = await window.crypto.subtle.generateKey(
-    {
-      name: "ECDSA",
-      namedCurve: "P-384"
-    },
-    true,
-    ["sign", "verify"]
-  );
+  const signingKey = await getSigningKey();
+  console.log(typeof signingKey);
 
   const iv = window.crypto.getRandomValues(new Uint8Array(12));
   const encryptedContent = await window.crypto.subtle.encrypt(
@@ -99,7 +113,6 @@ async function signFile(file, signingKey){
 
 async function handleUpload(event) {
   event.preventDefault();
-
   const fileInput = document.getElementById("file");
   const receiverSelect = document.getElementById("receiver");
   const file = fileInput.files[0];
