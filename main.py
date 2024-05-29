@@ -76,12 +76,14 @@ def create():
         username = secure_filename(request.form["username"])
         password = request.form["password"]
         public_key = request.form["publicKey"]
+        signingKey = request.form["signPublicKey"]
         path = os.path.join(app.config["UPLOAD_FOLDER"], username)
         if os.path.exists(path):
             return jsonify(error="Nope"), 400
         try:
             # remove user/folder on failue @derv6464
-            db.createUser(username, password, public_key)
+            print("creating user")
+            db.createUser(username, password, public_key, signingKey)
             os.mkdir(path)
         except Exception as e:
             print(e)
@@ -122,10 +124,11 @@ def upload_file():
         return jsonify(error="No symmetric key"), 400
     if "select" not in request.form:
         return jsonify(error="No receiver selected"), 400
-    if "signedFile" not in request.files:
+    if "signedFile" not in request.form:
         return jsonify(error="No signed file"), 400
     file = request.files["file"]
     symmetric_key = request.form["encryptedSymmetricKey"]
+    print("here")
     signed_file = request.form["signedFile"]
     receiver = request.form["select"]
     iv = request.form["iv"]

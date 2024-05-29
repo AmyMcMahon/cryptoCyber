@@ -37,7 +37,6 @@ async function getSigningKey() {
     let transaction = db.transaction(["dh-key"], "readonly");
     let store = transaction.objectStore("dh-key");
     let request = store.get(2);
-
     request.onsuccess = (event) => {
       if (request.result) {
         resolve(request.result.value.privateKey);
@@ -50,7 +49,27 @@ async function getSigningKey() {
       reject("Error retrieving private key from IndexedDB");
     };
   });
+  
 }
+
+// async function importSigningKey() {
+//   let key = await getSigningKey();
+//   console
+//   return key;
+
+//   console.log("returning key")
+//   return window.crypto.subtle.importKey(
+//     "jwk",
+//     key,
+//     {
+//       name: "ECDSA",
+//       namedCurve: "P-384",
+//     },
+//     true,
+//     ["sign"],
+//   );
+// }
+
 
 //upload section
 async function encryptFile(file) {
@@ -59,9 +78,9 @@ async function encryptFile(file) {
     true,
     ["encrypt", "decrypt"]
   );
-
   const signingKey = await getSigningKey();
-  console.log(typeof signingKey);
+  console.log(signingKey.privateKey);
+  console.log(typeof signingKey.privateKey)
 
   const iv = window.crypto.getRandomValues(new Uint8Array(12));
   const encryptedContent = await window.crypto.subtle.encrypt(
@@ -71,7 +90,8 @@ async function encryptFile(file) {
   );
 
   const exportedSymmetricKey = await window.crypto.subtle.exportKey("raw", symmetricKey);
-  const signature = await signFile(encryptedContent, signingKey.privateKey);
+  const signature = await signFile(encryptedContent, signingKey);
+  console.log("ready to upload")
 
   return {
     encryptedContent: new Uint8Array(encryptedContent),

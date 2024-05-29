@@ -1,6 +1,7 @@
 import { toggleModal } from './errorModal.js';
 
 async function genKey() {
+  console.log("gen key")
     const encrytKey =  await window.crypto.subtle.generateKey(
       {
         name: "RSA-OAEP",
@@ -20,21 +21,24 @@ async function genKey() {
       true,
       ["sign", "verify"]
     );
-    console.log("genertating key pair")
-    console.log(encrytKey);
-    console.log(signingKey);
     return [encrytKey, signingKey];
     
   }
 
-
   function encodeKey(key) {
+    console.log("encode key")
     var str = String.fromCharCode.apply(null, new Uint8Array(key));
     var b64 = window.btoa(str);
     return b64;
   }
 
   async function exportPublicKey(key) {
+    const publicKey = await crypto.subtle.exportKey("spki", key);
+    return encodeKey(publicKey);
+  }
+
+  async function exportSigningKey(key) {
+    console.log("signing key" + key)
     const publicKey = await crypto.subtle.exportKey("spki", key);
     return encodeKey(publicKey);
   }
@@ -67,16 +71,19 @@ document.getElementById('createAccountForm').addEventListener('submit', async (e
     let keys = await genKey();
     let keyPair = keys[0];
     let signPair = keys[1];
+    console.log("Key generated")
+
 
     // Save the key pair to IndexedDB
     let transaction = db.transaction(["dh-key"], "readwrite");
     let store = transaction.objectStore("dh-key");
     store.put({ id: 1, value: keyPair });
-    store.put({ id: 2, value: signPair });
+    store.put({ id: 2, value: signPair});
+    console.log("Key saved")
 
     // Export the public key to include in the form
     const publicKeyPem = await exportPublicKey(keyPair.publicKey);
-    const signPublicKeyPem = await exportPublicKey(signPair.publicKey);
+    const signPublicKeyPem = await exportSigningKey(signPair.publicKey);
 
     const formData = new FormData();
     formData.append('username', username);
@@ -85,6 +92,7 @@ document.getElementById('createAccountForm').addEventListener('submit', async (e
     formData.append('signPublicKey', signPublicKeyPem);
 
     try {
+      console.log("POSTING")
         const response = await fetch('/createAccount', {
             method: 'POST',
             body: formData
