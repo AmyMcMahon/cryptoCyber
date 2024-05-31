@@ -128,7 +128,6 @@ def upload_file():
         return jsonify(error="No signed file"), 400
     file = request.files["file"]
     symmetric_key = request.form["encryptedSymmetricKey"]
-    print("here")
     signed_file = request.form["signedFile"]
     receiver = request.form["select"]
     iv = request.form["iv"]
@@ -174,6 +173,18 @@ def get_encrypted_symmetric_key():
         return jsonify({"symmetricKey": symmetric_key, "iv": iv})
     else:
         return jsonify(error="Symmetric key not found"), 404
+
+
+@app.route("/getSignedFile", methods=["GET"])
+def get_signed_file():
+    id = request.args.get("id")
+    signed_file = db.getSignedFile(id)
+    signingKey = db.getSigningKey(str(current_user.id))
+
+    if signed_file:
+        return jsonify({"signedFile": signed_file, "key": signingKey})
+    else:
+        return jsonify(error="Signed file not found"), 404
 
 
 @app.route("/downloadEncryptedFile", methods=["GET"])

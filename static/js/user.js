@@ -52,25 +52,6 @@ async function getSigningKey() {
   
 }
 
-// async function importSigningKey() {
-//   let key = await getSigningKey();
-//   console
-//   return key;
-
-//   console.log("returning key")
-//   return window.crypto.subtle.importKey(
-//     "jwk",
-//     key,
-//     {
-//       name: "ECDSA",
-//       namedCurve: "P-384",
-//     },
-//     true,
-//     ["sign"],
-//   );
-// }
-
-
 //upload section
 async function encryptFile(file) {
   const symmetricKey = await window.crypto.subtle.generateKey(
@@ -79,8 +60,6 @@ async function encryptFile(file) {
     ["encrypt", "decrypt"]
   );
   const signingKey = await getSigningKey();
-  console.log(signingKey.privateKey);
-  console.log(typeof signingKey.privateKey)
 
   const iv = window.crypto.getRandomValues(new Uint8Array(12));
   const encryptedContent = await window.crypto.subtle.encrypt(
@@ -91,7 +70,6 @@ async function encryptFile(file) {
 
   const exportedSymmetricKey = await window.crypto.subtle.exportKey("raw", symmetricKey);
   const signature = await signFile(encryptedContent, signingKey);
-  console.log("ready to upload")
 
   return {
     encryptedContent: new Uint8Array(encryptedContent),
@@ -202,16 +180,6 @@ function base64ToArrayBuffer(base64) {
   return bytes.buffer;
 }
 
-async function blobToArrayBuffer(blob) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onloadend = () => resolve(reader.result);
-    reader.onerror = reject;
-    reader.readAsArrayBuffer(blob);
-  });
-}
-
-
 //download section
 async function decryptSymmetricKey(privateKey, encryptedSymmetricKey) {
   const encryptedKeyBuffer = base64ToArrayBuffer(encryptedSymmetricKey);
@@ -254,6 +222,30 @@ async function verifyFile(file, signature, publicKey){
   return isVerified;
 }
 
+async function importSignKey(key){
+
+  var str = window.atob(key);
+  const buffer = new ArrayBuffer(str.length);
+  const bufferView = new Uint8Array(buffer);
+  for (let i = 0, strLen = str.length; i < strLen; i++) {
+    bufferView[i] = str.charCodeAt(i);
+  }
+
+  console.log(typeof buffer);
+  const importedPublicKey = await window.crypto.subtle.importKey(
+    "spki",
+    buffer,
+    {
+      name: "ECDSA",
+      namedCurve: "P-384"
+    },
+    true,
+    ["verify"]
+  );
+
+  return importedPublicKey;
+}
+
 async function downloadFile(id, fileName) {
   try {
     const privateKey = await getPrivateKey();
@@ -262,21 +254,33 @@ async function downloadFile(id, fileName) {
     if (keyData.error) {
       throw new Error(keyData.error);
     }
+    const signedFileResponse = await fetch(`/getSignedFile?id=${id}`); 
+    const signature = await signedFileResponse.json();
+    if (signature.error) {
+      throw new Error(signature.error);
+    } 
+
     const encryptedSymmetricKey = keyData.symmetricKey;
     const iv = keyData.iv;
-    console.log(encryptedSymmetricKey);
-    console.log(iv);
+    const signedFile = new Uint8Array(base64ToArrayBuffer(signature.signedFile));
+    const signPubKey = signature.key;
+    const importedKey = await importSignKey(signPubKey);
+    
     const symmetricKey = await decryptSymmetricKey(privateKey, encryptedSymmetricKey);
-    console.log(symmetricKey);
     const decryptedIv = new Uint8Array(base64ToArrayBuffer(iv));
-    console.log(decryptedIv);
     const fileResponse = await fetch(`/downloadEncryptedFile?id=${id}`);
     if (!fileResponse.ok) {
       throw new Error('Failed to download file');
     }
     const responseData = await fileResponse.json();
-    console.log(responseData);
     const encryptedFileContent = new Uint8Array(base64ToArrayBuffer(responseData.fileContent));
+
+    console.log("IMPORTED KEY", importedKey);
+    const isVerified = await verifyFile(encryptedFileContent, signedFile, importedKey);
+    if (!isVerified) {
+      throw new Error('File signature is invalid');
+    }
+
     console.log(encryptedFileContent);
     const decryptedContent = await decryptFile(encryptedFileContent, symmetricKey, decryptedIv);
     const decryptedBlob = new Blob([decryptedContent], { type: 'text/plain' });

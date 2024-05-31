@@ -10,7 +10,7 @@ class Database:
             "CREATE TABLE IF NOT EXISTS USERS (username TEXT, password TEXT, public_key TEXT, signKey TEXT, id INTEGER PRIMARY KEY AUTOINCREMENT)"
         )
         self.connect.execute(
-            "CREATE TABLE IF NOT EXISTS FILES (sender TEXT, receiver TEXT, file_path TEXT, id INTEGER PRIMARY KEY AUTOINCREMENT, symmetric_key TEXT, signed_file, iv TEXT)"
+            "CREATE TABLE IF NOT EXISTS FILES (sender TEXT, receiver TEXT, file_path TEXT, id INTEGER PRIMARY KEY AUTOINCREMENT, symmetric_key TEXT, signed_file TEXT, iv TEXT)"
         )
         self.cursor = self.connect.cursor()
 
@@ -81,6 +81,19 @@ class Database:
             (sender, receiver, file_path, symmetric_key, str(signed_file), iv),
         )
         self.connect.commit()
+
+    def getSignedFile(self, id):
+        self.cursor.execute('SELECT signed_file FROM FILES WHERE id = "' + id + '"')
+        row = self.cursor.fetchone()
+        print("GOT FILE", row[0])
+        return row[0]
+
+    def getSigningKey(self, id):
+        self.cursor.execute('SELECT signKey FROM USERS WHERE id = "' + id + '"')
+        print("ID", id)
+        row = self.cursor.fetchone()
+        print("GOT KEY")
+        return row[0]
 
     # for debug, get rid of ltr
     def getAllUsersAdmin(self):
