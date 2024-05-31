@@ -143,15 +143,6 @@ function base64ToArrayBuffer(base64) {
   return bytes.buffer;
 }
 
-async function blobToArrayBuffer(blob) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onloadend = () => resolve(reader.result);
-    reader.onerror = reject;
-    reader.readAsArrayBuffer(blob);
-  });
-}
-
 
 //download section
 async function decryptSymmetricKey(privateKey, encryptedSymmetricKey) {
@@ -181,7 +172,7 @@ async function decryptFile(encryptedFileContent, symmetricKey, iv) {
   return new Uint8Array(decryptedContent);
 }
 
-async function downloadFile(id, fileName) {
+async function downloadFile(id) {
   try {
     const privateKey = await getPrivateKey();
     const keyResponse = await fetch(`/getEncryptedSymmetricKey?id=${id}`);
@@ -202,6 +193,8 @@ async function downloadFile(id, fileName) {
       throw new Error('Failed to download file');
     }
     const responseData = await fileResponse.json();
+    const fileName = responseData.fileName;
+    console.log(responseData);
     console.log(responseData);
     const encryptedFileContent = new Uint8Array(base64ToArrayBuffer(responseData.fileContent));
     console.log(encryptedFileContent);
@@ -221,7 +214,8 @@ async function downloadFile(id, fileName) {
   }
 }
 
-
-document.getElementById('downloadMe').addEventListener('click', (event) => {
-  downloadFile(event.target.value);
+document.querySelectorAll('.download-button').forEach(button => {
+  button.addEventListener('click', (event) => {
+    downloadFile(event.target.value);
+  });
 });
