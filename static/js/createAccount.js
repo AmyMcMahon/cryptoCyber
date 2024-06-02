@@ -38,7 +38,7 @@ async function genKey() {
   }
 
   async function exportSigningKey(key) {
-    console.log("signing key" + key)
+    console.log("signing key" + key);
     const publicKey = await crypto.subtle.exportKey("spki", key);
     return encodeKey(publicKey);
   }
@@ -78,10 +78,14 @@ document.getElementById('createAccountForm').addEventListener('submit', async (e
     let store = transaction.objectStore("dh-key");
     store.put({ id: 1, value: keyPair });
     store.put({ id: 2, value: signPair});
+    console.log("Key saved");
 
     // Export the public key to include in the form
     const publicKeyPem = await exportPublicKey(keyPair.publicKey);
     const signPublicKeyPem = await exportSigningKey(signPair.publicKey);
+    console.log("Key exported");
+
+    console.log(signPublicKeyPem);
 
     const formData = new FormData();
     formData.append('username', username);
@@ -96,7 +100,8 @@ document.getElementById('createAccountForm').addEventListener('submit', async (e
         });
       
         if (response.ok) {
-            window.location.replace("/user");
+            //window.location.replace("/user");
+            console.log("Account created")
         } else {
             const errorData = await response.json();
             toggleModal('Error logging in: ' + errorData.error);

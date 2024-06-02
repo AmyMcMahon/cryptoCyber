@@ -82,6 +82,7 @@ def create():
             # remove user/folder on failue @derv6464
             db.createUser(username, password, public_key, signingKey)
             os.mkdir(path)
+            return render_template("index.html")
         except Exception as e:
             print(e)
             print("failed to make directory or add to db")
@@ -162,7 +163,12 @@ def get_public_key():
 @app.route("/getEncryptedSymmetricKey", methods=["GET"])
 def get_encrypted_symmetric_key():
     id = request.args.get("id")
+    print
     symmetric_key, iv = db.getFileKeys(id)
+
+    print("iv", iv)
+    print("key", symmetric_key)
+
     if symmetric_key:
         return jsonify({"symmetricKey": symmetric_key, "iv": iv})
     else:
@@ -172,9 +178,9 @@ def get_encrypted_symmetric_key():
 @app.route("/getSignedFile", methods=["GET"])
 def get_signed_file():
     id = request.args.get("id")
+    user_id = db.getSender(id)
     signed_file = db.getSignedFile(id)
-    signingKey = db.getSigningKey(str(current_user.id))
-
+    signingKey = db.getSigningKey(user_id)
     if signed_file:
         return jsonify({"signedFile": signed_file, "key": signingKey})
     else:

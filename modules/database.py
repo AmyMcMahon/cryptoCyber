@@ -88,11 +88,16 @@ class Database:
         print("GOT FILE", row[0])
         return row[0]
 
-    def getSigningKey(self, id):
-        self.cursor.execute('SELECT signKey FROM USERS WHERE id = "' + id + '"')
-        print("ID", id)
+    def getSigningKey(self, username):
+
+        self.cursor.execute('SELECT signKey FROM USERS WHERE username = "' + username + '"')
         row = self.cursor.fetchone()
-        print("GOT KEY")
+        print("GOT KEY", row[0])
+        return row[0]
+    
+    def getSender(self, id):
+        self.cursor.execute('SELECT sender FROM FILES WHERE id = "' + id + '"')
+        row = self.cursor.fetchone()
         return row[0]
 
     # for debug, get rid of ltr
