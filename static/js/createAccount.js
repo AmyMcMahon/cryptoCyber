@@ -21,12 +21,12 @@ async function genKey() {
       true,
       ["sign", "verify"]
     );
+
     return [encrytKey, signingKey];
     
   }
 
   function encodeKey(key) {
-    console.log("encode key")
     var str = String.fromCharCode.apply(null, new Uint8Array(key));
     var b64 = window.btoa(str);
     return b64;
@@ -71,7 +71,6 @@ document.getElementById('createAccountForm').addEventListener('submit', async (e
     let keys = await genKey();
     let keyPair = keys[0];
     let signPair = keys[1];
-    console.log("Key generated")
 
 
     // Save the key pair to IndexedDB
@@ -79,7 +78,6 @@ document.getElementById('createAccountForm').addEventListener('submit', async (e
     let store = transaction.objectStore("dh-key");
     store.put({ id: 1, value: keyPair });
     store.put({ id: 2, value: signPair});
-    console.log("Key saved")
 
     // Export the public key to include in the form
     const publicKeyPem = await exportPublicKey(keyPair.publicKey);
@@ -92,7 +90,6 @@ document.getElementById('createAccountForm').addEventListener('submit', async (e
     formData.append('signPublicKey', signPublicKeyPem);
 
     try {
-      console.log("POSTING")
         const response = await fetch('/createAccount', {
             method: 'POST',
             body: formData
