@@ -43,6 +43,13 @@ jobs:
         -H 'Content-Type: application/x-www-form-urlencoded' \
         -d 'username=test4&password=pass&publicKey=1&signPublicKey=2'
 
+    - name: Upload logs as artifact
+      uses: actions/upload-artifact@v2
+      with:
+        name: error.log
+        path: ./error.log
+      if: always()
+
   run_scripts:
     runs-on: ubuntu-latest
 
