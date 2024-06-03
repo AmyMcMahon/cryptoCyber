@@ -33,7 +33,9 @@ jobs:
     - name: Start the server
       run: |
         python3 main.py &
-        sleep 3
+        sleep 3 
+        ls -l database.db
+        ls -l
 
     - name: testing 
       run: |
