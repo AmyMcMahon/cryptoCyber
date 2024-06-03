@@ -32,13 +32,56 @@ async function getPrivateKey() {
   });
 }
 
-//upload section
+async function getSigningKey() {
+  return new Promise((resolve, reject) => {
+    let transaction = db.transaction(["dh-key"], "readonly");
+    let store = transaction.objectStore("dh-key");
+    let request = store.get(2);
+    request.onsuccess = (event) => {
+      if (request.result) {
+        resolve(request.result.value.privateKey);
+      } else {
+        reject("Private key not found in IndexedDB");
+      }
+    };
+
+    request.onerror = (event) => {
+      reject("Error retrieving private key from IndexedDB");
+    };
+  });
+  
+}
+
+// Convert Uint8Array to Base64 String
+function arrayBufferToBase64(buffer) {
+  let binary = '';
+  const bytes = new Uint8Array(buffer);
+  const len = bytes.byteLength;
+  for (let i = 0; i < len; i++) {
+    binary += String.fromCharCode(bytes[i]);
+  }
+  return window.btoa(binary);
+}
+
+// Convert Base64 String to ArrayBuffer
+function base64ToArrayBuffer(base64) {
+  const binaryString = window.atob(base64);
+  const len = binaryString.length;
+  const bytes = new Uint8Array(len);
+  for (let i = 0; i < len; i++) {
+    bytes[i] = binaryString.charCodeAt(i);
+  }
+  return bytes.buffer;
+}
+
+
 async function encryptFile(file) {
   const symmetricKey = await window.crypto.subtle.generateKey(
     { name: "AES-GCM", length: 256 },
     true,
     ["encrypt", "decrypt"]
   );
+  const signingKey = await getSigningKey();
 
   const iv = window.crypto.getRandomValues(new Uint8Array(12));
   const encryptedContent = await window.crypto.subtle.encrypt(
@@ -48,9 +91,11 @@ async function encryptFile(file) {
   );
 
   const exportedSymmetricKey = await window.crypto.subtle.exportKey("raw", symmetricKey);
+  const signature = await signFile(encryptedContent, signingKey); 
 
   return {
     encryptedContent: new Uint8Array(encryptedContent),
+    signature: signature,
     iv: iv,
     symmetricKey: exportedSymmetricKey
   };
@@ -74,9 +119,21 @@ async function encryptSymmetricKey(publicKey, symmetricKey) {
   return new Uint8Array(encryptedSymmetricKey);
 }
 
+async function signFile(file, signingKey) {
+  const signature = await window.crypto.subtle.sign(
+    {
+      name: "ECDSA",
+      hash: { name: "SHA-384" },
+    },
+    signingKey,
+    file
+  );
+  console.log("signature just created", signature)
+  return signature;
+}
+
 async function handleUpload(event) {
   event.preventDefault();
-
   const fileInput = document.getElementById("file");
   const receiverSelect = document.getElementById("receiver");
   const file = fileInput.files[0];
@@ -96,11 +153,15 @@ async function handleUpload(event) {
     }
 
     const publicKey = data.publicKey;
-    const { encryptedContent, iv, symmetricKey } = await encryptFile(file);
+
+    const { encryptedContent, signature, iv, symmetricKey } = await encryptFile(file);
     const encryptedSymmetricKey = await encryptSymmetricKey(publicKey, symmetricKey);
+
+    console.log("SIGNATURE as posted to db", arrayBufferToBase64(signature));
 
     const formData = new FormData();
     formData.append("file", new Blob([encryptedContent], { type: file.type }), file.name);
+    formData.append("signedFile", arrayBufferToBase64(signature));
     formData.append("iv", arrayBufferToBase64(iv));
     formData.append("encryptedSymmetricKey", arrayBufferToBase64(encryptedSymmetricKey));
     formData.append("select", receiver);
@@ -143,7 +204,6 @@ function base64ToArrayBuffer(base64) {
   return bytes.buffer;
 }
 
-
 //download section
 async function decryptSymmetricKey(privateKey, encryptedSymmetricKey) {
   const encryptedKeyBuffer = base64ToArrayBuffer(encryptedSymmetricKey);
@@ -152,7 +212,6 @@ async function decryptSymmetricKey(privateKey, encryptedSymmetricKey) {
     privateKey,
     encryptedKeyBuffer
   );
-
   return new Uint8Array(decryptedKey);
 }
 
@@ -172,7 +231,47 @@ async function decryptFile(encryptedFileContent, symmetricKey, iv) {
   return new Uint8Array(decryptedContent);
 }
 
-async function downloadFile(id) {
+async function verifyFile(file, signature, publicKey) {
+  console.log("Signature to verify", signature);
+
+  const isVerified = await window.crypto.subtle.verify(
+    {
+      name: "ECDSA",
+      hash: { name: "SHA-384" },
+    },
+    publicKey,
+    signature,
+    new Uint8Array(file)
+  );
+  return isVerified;
+}
+
+async function importSignKey(key){
+
+  var str = window.atob(key);
+  const buffer = new ArrayBuffer(str.length);
+  const bufferView = new Uint8Array(buffer);
+  for (let i = 0, strLen = str.length; i < strLen; i++) {
+    bufferView[i] = str.charCodeAt(i);
+  }
+
+  console.log("buffer", buffer)
+
+  const importedPublicKey = await window.crypto.subtle.importKey(
+    "spki",
+    buffer,
+    {
+      name: "ECDSA",
+      namedCurve: "P-384"
+    },
+    true,
+    ["verify"]
+  );
+
+  return importedPublicKey;
+}
+
+async function downloadFile(id, fileName) {
   try {
     const privateKey = await getPrivateKey();
     const keyResponse = await fetch(`/getEncryptedSymmetricKey?id=${id}`);
@@ -180,26 +279,39 @@ async function downloadFile(id) {
     if (keyData.error) {
       throw new Error(keyData.error);
     }
+    const signedFileResponse = await fetch(`/getSignedFile?id=${id}`);
+    const signature = await signedFileResponse.json();
+    if (signature.error) {
+      throw new Error(signature.error);
+    }
+    console.log("signature gotten from db", signature.signedFile)
+
+
     const encryptedSymmetricKey = keyData.symmetricKey;
     const iv = keyData.iv;
-    console.log(encryptedSymmetricKey);
-    console.log(iv);
+    const signedFile = base64ToArrayBuffer(signature.signedFile);
+    console.log("base64ToArrayBuffer", signedFile)
+    const signPubKey = signature.key;
+    
+    const importedKey = await importSignKey(signPubKey);
+
     const symmetricKey = await decryptSymmetricKey(privateKey, encryptedSymmetricKey);
-    console.log(symmetricKey);
     const decryptedIv = new Uint8Array(base64ToArrayBuffer(iv));
-    console.log(decryptedIv);
+
     const fileResponse = await fetch(`/downloadEncryptedFile?id=${id}`);
     if (!fileResponse.ok) {
       throw new Error('Failed to download file');
     }
     const responseData = await fileResponse.json();
-    const fileName = responseData.fileName;
-    console.log(responseData);
-    console.log(responseData);
     const encryptedFileContent = new Uint8Array(base64ToArrayBuffer(responseData.fileContent));
-    console.log(encryptedFileContent);
+
+    const isVerified = await verifyFile(encryptedFileContent, signedFile, importedKey);
+    if (!isVerified) {
+      throw new Error('File signature is invalid');
+    }
+
     const decryptedContent = await decryptFile(encryptedFileContent, symmetricKey, decryptedIv);
-    const decryptedBlob = new Blob([decryptedContent], { type: 'text/plain' });
+    const decryptedBlob = new Blob([decryptedContent], { type: 'application/octet-stream' });
     const url = window.URL.createObjectURL(decryptedBlob);
     const a = document.createElement('a');
     a.style.display = 'none';
@@ -214,8 +326,11 @@ async function downloadFile(id) {
   }
 }
 
-document.querySelectorAll('.download-button').forEach(button => {
-  button.addEventListener('click', (event) => {
-    downloadFile(event.target.value);
-  });
-});
+var elements = document.getElementsByClassName("downloadMe");
+
+for (var i = 0; i < elements.length; i++) {
+    elements[i].addEventListener('click', (event) => {
+      downloadFile(event.target.value);
+    });
+}
+

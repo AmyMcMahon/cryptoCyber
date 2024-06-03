@@ -19,7 +19,6 @@ import os
 from modules.database import Database
 
 
-
 app = Flask(__name__)
 app.secret_key = "My Secret key"  # Change this to a random string later
 
@@ -50,7 +49,6 @@ def load_user(user_id):
 @app.route("/", methods=["POST", "GET"])
 def index():
     if request.method == "POST":
-        print(request)
         username = request.form["username"]
         password = request.form["password"]
         if db.check_Login(username, password):
@@ -58,7 +56,6 @@ def index():
             login_user(userToLogin, remember=False)
             return redirect(url_for("user"))
         else:
-            print('cant log in')
             return jsonify(error="Invalid username or password"), 401
     return render_template("index.html")
 
@@ -77,19 +74,21 @@ def create():
         username = secure_filename(request.form["username"])
         password = request.form["password"]
         public_key = request.form["publicKey"]
+        signingKey = request.form["signPublicKey"]
         path = os.path.join(app.config["UPLOAD_FOLDER"], username)
         if os.path.exists(path):
             return jsonify(error="Nope"), 400
         try:
-            #remove user/folder on failue @derv6464
-            db.createUser(username, password, public_key)
+            # remove user/folder on failue @derv6464
+            db.createUser(username, password, public_key, signingKey)
             os.mkdir(path)
+            return render_template("index.html")
         except Exception as e:
             print(e)
-            print("failed to make directory or add to db") 
-            #should change error code to be better lol
+            print("failed to make directory or add to db")
+            # should change error code to be better lol
             return jsonify(error="Failed to create account"), 400
-   
+
     return render_template("createAccount.html")
 
 
@@ -101,7 +100,6 @@ def user():
     user = current_user.username
     files = db.getUsersFiles(user)
     users = db.getAllUsers()
-    print(files)
     return render_template("user.html", files=files, users=users)
 
 
@@ -123,8 +121,11 @@ def upload_file():
         return jsonify(error="No symmetric key"), 400
     if "select" not in request.form:
         return jsonify(error="No receiver selected"), 400
+    if "signedFile" not in request.form:
+        return jsonify(error="No signed file"), 400
     file = request.files["file"]
     symmetric_key = request.form["encryptedSymmetricKey"]
+    signed_file = request.form["signedFile"]
     receiver = request.form["select"]
     iv = request.form["iv"]
 
@@ -142,7 +143,7 @@ def upload_file():
     if os.path.exists(save_path):
         file_path = os.path.join(save_path, filename)
         file.save(file_path)
-        db.insertFile(username, receiver, file_path, symmetric_key, iv)
+        db.insertFile(username, receiver, file_path, symmetric_key, signed_file, iv)
         return jsonify({"success": True})
     return jsonify(error="Failed to upload file"), 400
 
@@ -162,13 +163,28 @@ def get_public_key():
 @app.route("/getEncryptedSymmetricKey", methods=["GET"])
 def get_encrypted_symmetric_key():
     id = request.args.get("id")
+    print
     symmetric_key, iv = db.getFileKeys(id)
 
-    print(symmetric_key)
+    print("iv", iv)
+    print("key", symmetric_key)
+
     if symmetric_key:
         return jsonify({"symmetricKey": symmetric_key, "iv": iv})
     else:
         return jsonify(error="Symmetric key not found"), 404
+
+
+@app.route("/getSignedFile", methods=["GET"])
+def get_signed_file():
+    id = request.args.get("id")
+    user_id = db.getSender(id)
+    signed_file = db.getSignedFile(id)
+    signingKey = db.getSigningKey(user_id)
+    if signed_file:
+        return jsonify({"signedFile": signed_file, "key": signingKey})
+    else:
+        return jsonify(error="Signed file not found"), 404
 
 
 @app.route("/downloadEncryptedFile", methods=["GET"])

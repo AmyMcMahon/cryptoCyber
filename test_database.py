@@ -8,9 +8,20 @@ class TestDatebase(unittest.TestCase):
     def setUpClass(self):
         print("Setting up")
         self.db = Database()
-        self.db.createUser("testsender", "testpassword", "testpublickey")
-        self.db.createUser("testreceicer", "testpassword", "testpublickey")
-        self.db.insertFile("testsender", "testreceiver", "testfile", "testsymmetrickey", "testiv")
+        self.db.createUser(
+            "testsender", "testpassword", "testpublickey", "testsigningkey"
+        )
+        self.db.createUser(
+            "testreceicer", "testpassword", "testpublickey", "testsigningkey"
+        )
+        self.db.insertFile(
+            "testsender",
+            "testreceiver",
+            "testfile",
+            "testsymmetrickey",
+            "signedFile",
+            "testiv",
+        )
 
     def testCheckUserTable(self):
         user1 = "testsender"
@@ -38,7 +49,7 @@ class TestDatebase(unittest.TestCase):
         self.db.cursor.execute("DELETE FROM USERS WHERE username = 'testreceiver'")
         self.db.cursor.execute("DELETE FROM FILES WHERE sender = 'testsender'")
         self.db.cursor.execute("DELETE FROM FILES WHERE receiver = 'testreceiver'")
-       # os.remove
+        # os.remove
         self.db.connect.commit()
 
 
