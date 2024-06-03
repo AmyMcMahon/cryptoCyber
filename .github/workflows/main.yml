@@ -36,6 +36,8 @@ jobs:
         sleep 3 
         ls -l database.db
         ls -l
+        chmod +rw database.db
+        ls -l database.db
 
     - name: testing 
       run: |
