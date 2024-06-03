@@ -10,8 +10,8 @@ on:
     branches:
       - "main"
 
-permissions:
-  contents: read
+permissions: write-all
+
 
 jobs:
   run_server:
@@ -37,7 +37,6 @@ jobs:
 
     - name: testing 
       run: |
-        echo 0 >/selinux/enforce
         curl http://127.0.0.1:8000
         curl -X POST \
         http://127.0.0.1:8000/createAccount \
