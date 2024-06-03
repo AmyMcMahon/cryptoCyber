@@ -100,7 +100,7 @@ document.getElementById('createAccountForm').addEventListener('submit', async (e
         });
       
         if (response.ok) {
-            //window.location.replace("/user");
+            window.location.replace("/user");
             console.log("Account created")
         } else {
             const errorData = await response.json();
