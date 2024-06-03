@@ -1,74 +1,73 @@
-
 name: Main application
 
 on:
-    workflow_dispatch: # Ensure this is correctly indented
-    push:
-      branches: 
-        - "main" 
-        - "total-normal-pipelines"
-    pull_request:
-      branches: 
-        - "main"
+  workflow_dispatch:
+  push:
+    branches:
+      - "main" 
+      - "total-normal-pipelines"
+  pull_request:
+    branches:
+      - "main"
 
 permissions:
   contents: read
 
 jobs:
-  job:
-
+  run_server:
     runs-on: ubuntu-latest
 
     steps:
     - uses: actions/checkout@v3
+
     - name: Set up Python 3.10
       uses: actions/setup-python@v3
       with:
         python-version: "3.10"
+
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install flask
-        pip install werkzeug
-        pip install pycryptodome
-        pip install bcrypt
-        pip install pyAesCrypt
-        pip install rsa
-        pip install flask_login
+        pip install flask werkzeug pycryptodome bcrypt pyAesCrypt rsa flask_login
+
+    - name: Start the server
+      run: python3 main.py &
+
+    - name: Wait for server to start
+      run: |
+        while ! nc -z localhost 8000; do sleep 1; done
+
+  run_scripts:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Python 3.10
+      uses: actions/setup-python@v3
+      with:
+        python-version: "3.10"
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install chromedriver-autoinstaller selenium pyvirtualdisplay
 
     - name: Installing package list
-      run: apt list --installed    
-    - name: Removing previous chrome instances on runner 
-      run: sudo apt purge google-chrome-stable  
-        
+      run: apt list --installed
 
-    - name: Installing all necessary packages
-      run: pip install chromedriver-autoinstaller selenium pyvirtualdisplay
+    - name: Removing previous Chrome instances on runner 
+      run: sudo apt purge google-chrome-stable  
+
     - name: Install xvfb
       run: sudo apt-get install xvfb
-        
-    - name: Run the server
+
+    - name: Run the sender and receiver
       run: |
-        python3 main.py &
-        sleep 3
+        python3 selinum_scripts/connection.py
+        python3 selinum_scripts/sender.py &
+        python3 selinum_scripts/receiver.py
 
-
-    - name: testing 
-      run: |
-        curl http://127.0.0.1:8000
-        ls
-        ls -l database.db
-        curl -X POST \
-        http://127.0.0.1:8000/createAccount \
-        -H 'Content-Type: application/x-www-form-urlencoded' \
-        -d 'username=test&password=pass&publicKey=1&signPublicKey=2'
-
-
-    - name: Run the code
-      run: |
-         python3 selinum_scripts/sender.py 
-#& python3 selinum_scripts/reciver.py
-  
     - name: Capture screenshots
       run: |
         mkdir screenshots
@@ -89,11 +88,5 @@ jobs:
         path: ./error.log
       if: always()
 
-    - name: testing if file is created
-      run: |
-       ls
-
-
-      
-    
-        
+    - name: Testing if file is created
+      run: ls
