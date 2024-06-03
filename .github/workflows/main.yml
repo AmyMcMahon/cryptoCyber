@@ -50,7 +50,7 @@ jobs:
     - name: Run the server
       run: |
         python3 main.py &
-        sleep 10
+        sleep 3
 
 
     - name: testing 
@@ -67,14 +67,15 @@ jobs:
       run: |
         mkdir screenshots
         mv *.png screenshots
-        if: always()
+      if: always()
 
     - name: Upload screenshots as artifact
       uses: actions/upload-artifact@v2
       with:
         name: screenshots
         path: screenshots
-        
+      if: always()
+
     - name: testing if file is created
       run: |
        ls
