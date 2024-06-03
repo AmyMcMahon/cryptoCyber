@@ -84,7 +84,6 @@ def create():
             os.mkdir(path)
             return render_template("index.html")
         except Exception as e:
-            print(e)
             print("failed to make directory or add to db")
             # should change error code to be better lol
             return jsonify(error="Failed to create account"), 400
@@ -108,7 +107,6 @@ def user():
 def admin():
     users = db.getAllUsersAdmin()
     files = db.getAllFilesAdmin()
-    print(users)
     # error cause password not in db???
     return render_template("admin.html", users=users, files=files)
 
@@ -165,10 +163,6 @@ def get_encrypted_symmetric_key():
     id = request.args.get("id")
     print
     symmetric_key, iv = db.getFileKeys(id)
-
-    print("iv", iv)
-    print("key", symmetric_key)
-
     if symmetric_key:
         return jsonify({"symmetricKey": symmetric_key, "iv": iv})
     else:
@@ -196,7 +190,12 @@ def download_encrypted_file():
         with open(file_path, "rb") as file:
             file_content = file.read()
         file_content_base64 = base64.b64encode(file_content).decode("utf-8")
-        return jsonify({"fileContent": file_content_base64, "fileName": os.path.basename(file_path)})
+        return jsonify(
+            {
+                "fileContent": file_content_base64,
+                "fileName": os.path.basename(file_path),
+            }
+        )
     else:
         return jsonify(error="File not found"), 404
 

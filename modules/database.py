@@ -22,7 +22,6 @@ class Database:
         if row is None:
             salt = bcrypt.gensalt(rounds=16)
             hash_pass = bcrypt.hashpw(password.encode("utf-8"), salt)
-
             self.cursor.execute(
                 "INSERT INTO USERS(username, password, public_key, signKey) VALUES ( ?, ?, ?, ?)",
                 (username, hash_pass, public_key, signingKey),
