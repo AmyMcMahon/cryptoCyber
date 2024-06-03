@@ -38,6 +38,7 @@ jobs:
         ls -l
         chmod +rw database.db
         ls -l database.db
+        whoami
 
     - name: testing 
       run: |
