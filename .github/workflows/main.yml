@@ -1,72 +1,74 @@
+
 name: Main application
 
 on:
-  workflow_dispatch:
-  push:
-    branches:
-      - "main" 
-      - "total-normal-pipelines"
-  pull_request:
-    branches:
-      - "main"
+    workflow_dispatch: # Ensure this is correctly indented
+    push:
+      branches: 
+        - "main" 
+        - "total-normal-pipelines"
+    pull_request:
+      branches: 
+        - "main"
 
 permissions:
   contents: read
 
 jobs:
-  run_server:
+  job:
+
     runs-on: ubuntu-latest
 
     steps:
     - uses: actions/checkout@v3
-
     - name: Set up Python 3.10
       uses: actions/setup-python@v3
       with:
         python-version: "3.10"
-
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install flask werkzeug pycryptodome bcrypt pyAesCrypt rsa flask_login
-
-    - name: Start the server
-      run: python3 main.py &
-
-    - name: Wait for server to start
-      run: sleep 10s
-
-  run_scripts:
-    runs-on: ubuntu-latest
-    needs: run_server
-
-    steps:
-    - uses: actions/checkout@v3
-
-    - name: Set up Python 3.10
-      uses: actions/setup-python@v3
-      with:
-        python-version: "3.10"
-
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install chromedriver-autoinstaller selenium pyvirtualdisplay
+        pip install flask
+        pip install werkzeug
+        pip install pycryptodome
+        pip install bcrypt
+        pip install pyAesCrypt
+        pip install rsa
+        pip install flask_login
 
     - name: Installing package list
-      run: apt list --installed
-
-    - name: Removing previous Chrome instances on runner 
+      run: apt list --installed    
+    - name: Removing previous chrome instances on runner 
       run: sudo apt purge google-chrome-stable  
+        
 
+    - name: Installing all necessary packages
+      run: pip install chromedriver-autoinstaller selenium pyvirtualdisplay
     - name: Install xvfb
       run: sudo apt-get install xvfb
-
-    - name: Run the sender and receiver
+        
+    - name: Run the server
       run: |
-        python3 selinum_scripts/sender.py 
- #    &   python3 selinum_scripts/receiver.py
+        python3 main.py &
+        sleep 3
 
+
+    - name: testing 
+      run: |
+        curl http://127.0.0.1:8000
+        ls
+        ls -l database.db
+        curl -X POST \
+        http://localhost:5000/createAccount \
+        -H 'Content-Type: application/x-www-form-urlencoded' \
+        -d 'username=test&password=pass&publicKey=1&signPublicKey=2'
+
+
+    - name: Run the code
+      run: |
+         python3 selinum_scripts/sender.py 
+#& python3 selinum_scripts/reciver.py
+  
     - name: Capture screenshots
       run: |
         mkdir screenshots
@@ -87,5 +89,11 @@ jobs:
         path: ./error.log
       if: always()
 
-    - name: Testing if file is created
-      run: ls
+    - name: testing if file is created
+      run: |
+       ls
+
+
+      
+    
+        

@@ -75,7 +75,7 @@ def signup():
 
 def login():
     #waits for singup 1 & 2
-    time.sleep(20)
+    time.sleep(10)
     driver.save_screenshot('screenshot5.png')
     driver.find_element(By.XPATH, login_xpaths["username"]).send_keys("testuser1")
     driver.save_screenshot('screenshot6.png')
@@ -85,7 +85,7 @@ def login():
     driver.save_screenshot('screenshot8.png')
     print("logged in")
     os.system("echo logged in")
-    time.sleep(10)
+    time.sleep(5)
 
 def upload():
     #waits for login 1
