@@ -35,7 +35,6 @@ jobs:
         pip install pyAesCrypt
         pip install rsa
         pip install flask_login
-        pip install sqlite3
 
     - name: Installing package list
       run: apt list --installed    
