@@ -1,7 +1,9 @@
-import os 
+import subprocess
 
-web = os.system("curl http://127.0.0.1:8000/")
 
-while "html" not in web:
-    web = os.system("curl http://127.0.0.1:8000/")
-    os.system(web)
+output = subprocess.check_output(["curl", "http://127.0.0.1:8000/"])
+output_str = output.decode("utf-8")
+
+while "html" not in output_str:
+    output = subprocess.check_output(["curl", "http://127.0.0.1:8000/"])
+    output_str = output.decode("utf-8")

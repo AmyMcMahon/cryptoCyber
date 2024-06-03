@@ -31,11 +31,17 @@ jobs:
         pip install flask werkzeug pycryptodome bcrypt pyAesCrypt rsa flask_login
 
     - name: Start the server
-      run: python3 main.py &
-
-    - name: Wait for server to start
       run: |
-        while ! nc -z localhost 8000; do sleep 1; done
+        python3 main.py &
+        sleep 3
+
+    - name: testing 
+      run: |
+        curl http://127.0.0.1:8000
+        curl -X POST \
+        http://127.0.0.1:8000/createAccount \
+        -H 'Content-Type: application/x-www-form-urlencoded' \
+        -d 'username=test4&password=pass&publicKey=1&signPublicKey=2'
 
   run_scripts:
     runs-on: ubuntu-latest

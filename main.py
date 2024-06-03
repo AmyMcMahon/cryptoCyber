@@ -84,7 +84,7 @@ def create():
             return render_template("index.html")
         except Exception as e:
             os.system(e)
-            with open("error.log", "w") as f:
+            with open("error.log", "a") as f:
                 f.write(str(e))
             print(e)
             print("failed to make directory or add to db")
