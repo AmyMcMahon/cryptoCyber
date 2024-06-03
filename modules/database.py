@@ -7,7 +7,7 @@ class Database:
     def __init__(self):
         self.connect = sqlite3.connect("database.db", check_same_thread=False)
         self.connect.execute(
-            "CREATE TABLE IF NOT EXISTS USERS (username TEXT, password TEXT, salt TEXT, public_key TEXT, id INTEGER PRIMARY KEY AUTOINCREMENT)"
+            "CREATE TABLE IF NOT EXISTS USERS (username TEXT, password TEXT, public_key TEXT, id INTEGER PRIMARY KEY AUTOINCREMENT)"
         )
         self.connect.execute(
             "CREATE TABLE IF NOT EXISTS FILES (sender TEXT, receiver TEXT, file_path TEXT, id INTEGER PRIMARY KEY AUTOINCREMENT, symmetric_key TEXT, iv TEXT)"
@@ -22,7 +22,6 @@ class Database:
         if row is None:
             salt = bcrypt.gensalt(rounds=16)
             hash_pass = bcrypt.hashpw(password.encode("utf-8"), salt)
-            print(hash_pass)
             self.cursor.execute(
                 "INSERT INTO USERS(username, password, public_key) VALUES ( ?, ?, ?)",
                 (username, hash_pass, public_key),
@@ -93,10 +92,12 @@ class Database:
         rows = self.cursor.fetchall()
         return rows
 
-    #returns only file path
+    # returns only file path
     def getUsersFiles(self, username):
         self.cursor.execute(
-            'SELECT sender, file_path, id FROM FILES WHERE receiver = "' + username + '"'
+            'SELECT sender, file_path, id FROM FILES WHERE receiver = "'
+            + username
+            + '"'
         )
         rows = self.cursor.fetchall()
         clean_rows = []
@@ -113,9 +114,7 @@ class Database:
         return row[0], row[1]
 
     def getFilePath(self, id):
-        self.cursor.execute(
-            'SELECT file_path FROM FILES WHERE id = "' + id + '"'
-        )
+        self.cursor.execute('SELECT file_path FROM FILES WHERE id = "' + id + '"')
         row = self.cursor.fetchone()
         return row[0]
 
@@ -128,5 +127,3 @@ class Database:
             file_path = file_path.split("/")[-1]
             clean_rows.append((sender, receiver, file_path))
         return clean_rows
-
-

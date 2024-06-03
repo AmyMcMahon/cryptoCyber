@@ -19,7 +19,6 @@ import os
 from modules.database import Database
 
 
-
 app = Flask(__name__)
 app.secret_key = "My Secret key"  # Change this to a random string later
 
@@ -50,7 +49,6 @@ def load_user(user_id):
 @app.route("/", methods=["POST", "GET"])
 def index():
     if request.method == "POST":
-        print(request)
         username = request.form["username"]
         password = request.form["password"]
         if db.check_Login(username, password):
@@ -58,7 +56,6 @@ def index():
             login_user(userToLogin, remember=False)
             return redirect(url_for("user"))
         else:
-            print('cant log in')
             return jsonify(error="Invalid username or password"), 401
     return render_template("index.html")
 
@@ -81,15 +78,14 @@ def create():
         if os.path.exists(path):
             return jsonify(error="Nope"), 400
         try:
-            #remove user/folder on failue @derv6464
+            # remove user/folder on failue @derv6464
             db.createUser(username, password, public_key)
             os.mkdir(path)
         except Exception as e:
-            print(e)
-            print("failed to make directory or add to db") 
-            #should change error code to be better lol
+            print("failed to make directory or add to db")
+            # should change error code to be better lol
             return jsonify(error="Failed to create account"), 400
-   
+
     return render_template("createAccount.html")
 
 
@@ -101,7 +97,6 @@ def user():
     user = current_user.username
     files = db.getUsersFiles(user)
     users = db.getAllUsers()
-    print(files)
     return render_template("user.html", files=files, users=users)
 
 
@@ -110,7 +105,6 @@ def user():
 def admin():
     users = db.getAllUsersAdmin()
     files = db.getAllFilesAdmin()
-    print(users)
     # error cause password not in db???
     return render_template("admin.html", users=users, files=files)
 
@@ -164,7 +158,6 @@ def get_encrypted_symmetric_key():
     id = request.args.get("id")
     symmetric_key, iv = db.getFileKeys(id)
 
-    print(symmetric_key)
     if symmetric_key:
         return jsonify({"symmetricKey": symmetric_key, "iv": iv})
     else:
@@ -180,7 +173,12 @@ def download_encrypted_file():
         with open(file_path, "rb") as file:
             file_content = file.read()
         file_content_base64 = base64.b64encode(file_content).decode("utf-8")
-        return jsonify({"fileContent": file_content_base64, "fileName": os.path.basename(file_path)})
+        return jsonify(
+            {
+                "fileContent": file_content_base64,
+                "fileName": os.path.basename(file_path),
+            }
+        )
     else:
         return jsonify(error="File not found"), 404
 
