@@ -59,7 +59,7 @@ jobs:
         ls
         ls -l database.db
         curl -X POST \
-        http://localhost:5000/createAccount \
+        http://127.0.0.1:8000/createAccount \
         -H 'Content-Type: application/x-www-form-urlencoded' \
         -d 'username=test&password=pass&publicKey=1&signPublicKey=2'
 
