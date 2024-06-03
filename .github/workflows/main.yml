@@ -42,10 +42,6 @@ jobs:
         http://127.0.0.1:8000/createAccount \
         -H 'Content-Type: application/x-www-form-urlencoded' \
         -d 'username=test4&password=pass&publicKey=1&signPublicKey=2'
-        curl -X POST \
-        http://127.0.0.1:8000/createAccount \
-        -H 'Content-Type: application/x-www-form-urlencoded' \
-        -d 'username=test&password=pass&publicKey=2&signPublicKey=3'
 
     - name: Upload logs as artifact
       uses: actions/upload-artifact@v2
