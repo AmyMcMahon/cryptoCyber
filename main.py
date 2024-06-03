@@ -196,7 +196,7 @@ def download_encrypted_file():
         with open(file_path, "rb") as file:
             file_content = file.read()
         file_content_base64 = base64.b64encode(file_content).decode("utf-8")
-        return jsonify({"fileContent": file_content_base64})
+        return jsonify({"fileContent": file_content_base64, "fileName": os.path.basename(file_path)})
     else:
         return jsonify(error="File not found"), 404
 
