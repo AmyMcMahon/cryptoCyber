@@ -35,6 +35,7 @@ jobs:
         pip install pyAesCrypt
         pip install rsa
         pip install flask_login
+        pip install sqlite3
 
     - name: Installing package list
       run: apt list --installed    
@@ -58,17 +59,15 @@ jobs:
         curl http://127.0.0.1:8000
         ls
         ls -l database.db
-        sqlite3 database.db ".schema" ".tables" "PRAGMA table_info(your_table)"
-
-
-
 
     - name: Run the code
       run: |
-        sh ./selinum_scripts/run.sh
+        ls -l database.db
+        python3 selinum_scripts/sender.py & python3 selinum_scripts/reciver.py
   
     - name: Capture screenshots
       run: |
+        ls -l database.db
         mkdir screenshots
         mv *.png screenshots
       if: always()
