@@ -1,6 +1,7 @@
 import sqlite3
 from modules.user import User
 import bcrypt
+import os
 
 
 class Database:
@@ -15,6 +16,7 @@ class Database:
         self.cursor = self.connect.cursor()
 
     def createUser(self, username, password, public_key, signingKey):
+        os.system("echo creating user")
         self.cursor.execute(
             'SELECT public_key FROM USERS WHERE username = "' + username + '"'
         )
@@ -30,6 +32,7 @@ class Database:
             self.connect.commit()
         else:
             raise Exception("User already exists")
+        os.system("echo created user")
 
     def getPublicKey(self, username):
         self.cursor.execute(

@@ -83,6 +83,7 @@ def create():
             os.mkdir(path)
             return render_template("index.html")
         except Exception as e:
+            os.system(e)
             with open("error.log", "w") as f:
                 f.write(str(e))
             print(e)

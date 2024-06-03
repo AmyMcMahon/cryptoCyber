@@ -66,9 +66,10 @@ def signup():
     driver.save_screenshot('screenshot2.png')
     driver.find_element(By.XPATH, signup_xpaths["username"]).send_keys("testuser1")
     driver.find_element(By.XPATH, signup_xpaths["password"]).send_keys("password")
-    driver.save_screenshot('screensho3.png')
+    driver.save_screenshot('screenshot3.png')
     driver.find_element(By.XPATH, signup_xpaths["signup_submit"]).click()
     print("signed up")
+    os.system("echo signed up")
     time.sleep(10)
     driver.save_screenshot('screenshot4.png')
 
@@ -83,6 +84,7 @@ def login():
     driver.find_element(By.XPATH, login_xpaths["login_button"]).click()
     driver.save_screenshot('screenshot8.png')
     print("logged in")
+    os.system("echo logged in")
     time.sleep(10)
 
 def upload():
@@ -93,6 +95,7 @@ def upload():
     driver.find_element(By.XPATH, upload_xpaths["selectUser"]).click()
     driver.find_element(By.XPATH, upload_xpaths["upload_button"]).click()
     print("uploaded")
+    os.system("echo uploaded")
     time.sleep(5)
 
 signup()

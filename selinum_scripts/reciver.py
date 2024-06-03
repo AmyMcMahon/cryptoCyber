@@ -62,6 +62,7 @@ def signup():
     driver.find_element(By.XPATH, signup_xpaths["password"]).send_keys("password")
     driver.find_element(By.XPATH, signup_xpaths["signup_submit"]).click()
     print("signed up")
+    os.system("echo signed up")
 
 
 def login():
@@ -71,6 +72,7 @@ def login():
     driver.find_element(By.XPATH, login_xpaths["password"]).send_keys("password")
     driver.find_element(By.XPATH, login_xpaths["login_button"]).click()
     print("logged in")
+    os.system("echo logged in")
 
 
 def download():
@@ -78,6 +80,7 @@ def download():
     time.sleep(10)
     driver.find_element(By.XPATH, download_xpaths["download_button"]).click()
     print("downloaded")
+    os.system("echo downloaded")
     time.sleep(10)
 
 
