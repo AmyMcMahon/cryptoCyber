@@ -52,28 +52,6 @@ async function getSigningKey() {
   
 }
 
-// Convert Uint8Array to Base64 String
-function arrayBufferToBase64(buffer) {
-  let binary = '';
-  const bytes = new Uint8Array(buffer);
-  const len = bytes.byteLength;
-  for (let i = 0; i < len; i++) {
-    binary += String.fromCharCode(bytes[i]);
-  }
-  return window.btoa(binary);
-}
-
-// Convert Base64 String to ArrayBuffer
-function base64ToArrayBuffer(base64) {
-  const binaryString = window.atob(base64);
-  const len = binaryString.length;
-  const bytes = new Uint8Array(len);
-  for (let i = 0; i < len; i++) {
-    bytes[i] = binaryString.charCodeAt(i);
-  }
-  return bytes.buffer;
-}
-
 
 async function encryptFile(file) {
   const symmetricKey = await window.crypto.subtle.generateKey(
@@ -309,7 +287,7 @@ async function downloadFile(id, fileName) {
     if (!isVerified) {
       throw new Error('File signature is invalid');
     }
-
+    const fileName = responseData.fileName;
     const decryptedContent = await decryptFile(encryptedFileContent, symmetricKey, decryptedIv);
     const decryptedBlob = new Blob([decryptedContent], { type: 'application/octet-stream' });
     const url = window.URL.createObjectURL(decryptedBlob);
