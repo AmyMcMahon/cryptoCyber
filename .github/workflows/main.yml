@@ -76,6 +76,13 @@ jobs:
         path: screenshots
       if: always()
 
+    - name: Upload logs as artifact
+      uses: actions/upload-artifact@v2
+      with:
+        name: error.log
+        path: ./error.log
+      if: always()
+
     - name: testing if file is created
       run: |
        ls

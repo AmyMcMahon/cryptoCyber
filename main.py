@@ -79,11 +79,12 @@ def create():
         if os.path.exists(path):
             return jsonify(error="Nope"), 400
         try:
-            # remove user/folder on failue @derv6464
             db.createUser(username, password, public_key, signingKey)
             os.mkdir(path)
             return render_template("index.html")
         except Exception as e:
+            with open("error.log", "w") as f:
+                f.write(str(e))
             print(e)
             print("failed to make directory or add to db")
             # should change error code to be better lol
