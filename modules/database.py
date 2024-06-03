@@ -7,14 +7,14 @@ class Database:
     def __init__(self):
         self.connect = sqlite3.connect("database.db", check_same_thread=False)
         self.connect.execute(
-            "CREATE TABLE IF NOT EXISTS USERS (username TEXT, password TEXT, public_key TEXT, id INTEGER PRIMARY KEY AUTOINCREMENT)"
+            "CREATE TABLE IF NOT EXISTS USERS (username TEXT, password TEXT, public_key TEXT, signKey TEXT, id INTEGER PRIMARY KEY AUTOINCREMENT)"
         )
         self.connect.execute(
-            "CREATE TABLE IF NOT EXISTS FILES (sender TEXT, receiver TEXT, file_path TEXT, id INTEGER PRIMARY KEY AUTOINCREMENT, symmetric_key TEXT, iv TEXT)"
+            "CREATE TABLE IF NOT EXISTS FILES (sender TEXT, receiver TEXT, file_path TEXT, id INTEGER PRIMARY KEY AUTOINCREMENT, symmetric_key TEXT, signed_file TEXT, iv TEXT)"
         )
         self.cursor = self.connect.cursor()
 
-    def createUser(self, username, password, public_key):
+    def createUser(self, username, password, public_key, signingKey):
         self.cursor.execute(
             'SELECT public_key FROM USERS WHERE username = "' + username + '"'
         )
@@ -23,8 +23,8 @@ class Database:
             salt = bcrypt.gensalt(rounds=16)
             hash_pass = bcrypt.hashpw(password.encode("utf-8"), salt)
             self.cursor.execute(
-                "INSERT INTO USERS(username, password, public_key) VALUES ( ?, ?, ?)",
-                (username, hash_pass, public_key),
+                "INSERT INTO USERS(username, password, public_key, signKey) VALUES ( ?, ?, ?, ?)",
+                (username, hash_pass, public_key, signingKey),
             )
             self.connect.commit()
         else:
@@ -39,7 +39,7 @@ class Database:
 
     def getPassword(self, username):
         self.cursor.execute(
-            "SELECT password, salt FROM USERS WHERE username = ?", (username,)
+            "SELECT password FROM USERS WHERE username = ?", (username,)
         )
         row = self.cursor.fetchone()
         if row is None:
@@ -74,12 +74,30 @@ class Database:
         else:
             return None
 
-    def insertFile(self, sender, receiver, file_path, symmetric_key, iv):
+    def insertFile(self, sender, receiver, file_path, symmetric_key, signed_file, iv):
         self.cursor.execute(
-            "INSERT INTO FILES(sender, receiver, file_path, symmetric_key, iv) VALUES (?, ?, ?, ?, ?)",
-            (sender, receiver, file_path, symmetric_key, iv),
+            "INSERT INTO FILES(sender, receiver, file_path, symmetric_key, signed_file, iv) VALUES (?, ?, ?, ?, ?, ?)",
+            (sender, receiver, file_path, symmetric_key, str(signed_file), iv),
         )
         self.connect.commit()
+
+    def getSignedFile(self, id):
+        self.cursor.execute('SELECT signed_file FROM FILES WHERE id = "' + id + '"')
+        row = self.cursor.fetchone()
+        print("GOT FILE", row[0])
+        return row[0]
+
+    def getSigningKey(self, username):
+
+        self.cursor.execute('SELECT signKey FROM USERS WHERE username = "' + username + '"')
+        row = self.cursor.fetchone()
+        print("GOT KEY", row[0])
+        return row[0]
+    
+    def getSender(self, id):
+        self.cursor.execute('SELECT sender FROM FILES WHERE id = "' + id + '"')
+        row = self.cursor.fetchone()
+        return row[0]
 
     # for debug, get rid of ltr
     def getAllUsersAdmin(self):
