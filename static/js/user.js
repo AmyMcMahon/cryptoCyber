@@ -182,6 +182,28 @@ async function handleUpload(event) {
 
 document.getElementById("uploadForm").addEventListener("submit", handleUpload);
 
+// Convert Uint8Array to Base64 String
+function arrayBufferToBase64(buffer) {
+  let binary = '';
+  const bytes = new Uint8Array(buffer);
+  const len = bytes.byteLength;
+  for (let i = 0; i < len; i++) {
+    binary += String.fromCharCode(bytes[i]);
+  }
+  return window.btoa(binary);
+}
+
+// Convert Base64 String to ArrayBuffer
+function base64ToArrayBuffer(base64) {
+  const binaryString = window.atob(base64);
+  const len = binaryString.length;
+  const bytes = new Uint8Array(len);
+  for (let i = 0; i < len; i++) {
+    bytes[i] = binaryString.charCodeAt(i);
+  }
+  return bytes.buffer;
+}
+
 //download section
 async function decryptSymmetricKey(privateKey, encryptedSymmetricKey) {
   const encryptedKeyBuffer = base64ToArrayBuffer(encryptedSymmetricKey);
@@ -208,7 +230,6 @@ async function decryptFile(encryptedFileContent, symmetricKey, iv) {
   )
   return new Uint8Array(decryptedContent);
 }
-
 
 async function verifyFile(file, signature, publicKey) {
   console.log("Signature to verify", signature);
@@ -305,7 +326,6 @@ async function downloadFile(id, fileName) {
   }
 }
 
-
 var elements = document.getElementsByClassName("downloadMe");
 
 for (var i = 0; i < elements.length; i++) {
@@ -313,3 +333,4 @@ for (var i = 0; i < elements.length; i++) {
       downloadFile(event.target.value);
     });
 }
+
