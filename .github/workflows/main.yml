@@ -56,6 +56,10 @@ jobs:
     - name: testing 
       run: |
         curl http://127.0.0.1:8000
+        ls
+        ls -l database.db
+        sqlite3 database.db ".schema" ".tables" "PRAGMA table_info(your_table)"
+
 
 
 
