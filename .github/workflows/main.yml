@@ -37,7 +37,9 @@ jobs:
         pip install flask_login
         
     - name: Run the server
-      run: python3 main.py
+      run: |
+        python3 main.py &
+        sleep 10
 
 
     - name: testing 
