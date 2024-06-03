@@ -10,8 +10,8 @@ on:
     branches:
       - "main"
 
-permissions: write-all
-
+permissions:
+  contents: write
 
 jobs:
   run_server:
