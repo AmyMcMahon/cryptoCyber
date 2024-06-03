@@ -92,12 +92,10 @@ async function encryptFile(file) {
 
   const exportedSymmetricKey = await window.crypto.subtle.exportKey("raw", symmetricKey);
   const signature = await signFile(encryptedContent, signingKey); 
-  
-  console.log("signature sent from encryptFile", new Uint8Array(signature) )
 
   return {
     encryptedContent: new Uint8Array(encryptedContent),
-    signature: new Uint8Array(signature),
+    signature: signature,
     iv: iv,
     symmetricKey: exportedSymmetricKey
   };
@@ -155,14 +153,15 @@ async function handleUpload(event) {
     }
 
     const publicKey = data.publicKey;
+
     const { encryptedContent, signature, iv, symmetricKey } = await encryptFile(file);
     const encryptedSymmetricKey = await encryptSymmetricKey(publicKey, symmetricKey);
 
-    console.log("SIGNATURE as posted to db", btoa(signature));
+    console.log("SIGNATURE as posted to db", arrayBufferToBase64(signature));
 
     const formData = new FormData();
     formData.append("file", new Blob([encryptedContent], { type: file.type }), file.name);
-    formData.append("signedFile", btoa(signature));
+    formData.append("signedFile", arrayBufferToBase64(signature));
     formData.append("iv", arrayBufferToBase64(iv));
     formData.append("encryptedSymmetricKey", arrayBufferToBase64(encryptedSymmetricKey));
     formData.append("select", receiver);
@@ -266,10 +265,11 @@ async function downloadFile(id, fileName) {
     }
     console.log("signature gotten from db", signature.signedFile)
 
+
     const encryptedSymmetricKey = keyData.symmetricKey;
     const iv = keyData.iv;
     const signedFile = base64ToArrayBuffer(signature.signedFile);
-    console.log("UINT array converted from db", signedFile)
+    console.log("base64ToArrayBuffer", signedFile)
     const signPubKey = signature.key;
     
     const importedKey = await importSignKey(signPubKey);
