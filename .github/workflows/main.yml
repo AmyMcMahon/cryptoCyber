@@ -61,13 +61,11 @@ jobs:
 
     - name: Run the code
       run: |
-        ls -l database.db
         python3 selinum_scripts/sender.py 
 #& python3 selinum_scripts/reciver.py
   
     - name: Capture screenshots
       run: |
-        ls -l database.db
         mkdir screenshots
         mv *.png screenshots
       if: always()
