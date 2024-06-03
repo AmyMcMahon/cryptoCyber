@@ -15,7 +15,7 @@ permissions:
   contents: read
 
 jobs:
-  Set_Up_Server:
+  job:
 
     runs-on: ubuntu-latest
 
@@ -35,6 +35,17 @@ jobs:
         pip install pyAesCrypt
         pip install rsa
         pip install flask_login
+
+    - name: Installing package list
+      run: apt list --installed    
+    - name: Removing previous chrome instances on runner 
+      run: sudo apt purge google-chrome-stable  
+        
+
+    - name: Installing all necessary packages
+      run: pip install chromedriver-autoinstaller selenium pyvirtualdisplay
+    - name: Install xvfb
+      run: sudo apt-get install xvfb
         
     - name: Run the server
       run: |
@@ -46,34 +57,15 @@ jobs:
       run: |
         curl http://127.0.0.1:8000
 
-  Run_Full_User_Test:
-      needs: Set_Up_Server
-      runs-on: ubuntu-latest
+
+
+    - name: Run the code
+      run: |
+        sh ./selinum_scripts/run.sh
   
-      steps:
-      - uses: actions/checkout@v3
-      - name: Set up Python 3.10
-        uses: actions/setup-python@v3
-        with:
-          python-version: '3.9'
-      - name: Installing package list
-        run: apt list --installed    
-      - name: Removing previous chrome instances on runner 
-        run: sudo apt purge google-chrome-stable  
-        
-       # Need to fetch reqs if needed
-      - name: Installing all necessary packages
-        run: pip install chromedriver-autoinstaller selenium pyvirtualdisplay
-      - name: Install xvfb
-        run: sudo apt-get install xvfb
-        
-      - name: Run the code
-        run: |
-          sh ./selinum_scripts/run.sh
-  
-      - name: testing if file is created
-        run: |
-          ls
+    - name: testing if file is created
+      run: |
+       ls
 
 
       
