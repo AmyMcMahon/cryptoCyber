@@ -61,7 +61,7 @@ jobs:
 
     - name: Run the code
       run: |
-        python3 selinum_scripts/sender.py 
+        sudo python3 selinum_scripts/sender.py 
 #& python3 selinum_scripts/reciver.py
   
     - name: Capture screenshots
