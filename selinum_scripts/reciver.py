@@ -1,6 +1,7 @@
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.common.by import By
 import chromedriver_autoinstaller
 from pyvirtualdisplay import Display
 import time
@@ -60,6 +61,7 @@ def signup():
     driver.find_element(By.XPATH, signup_xpaths["username"]).send_keys("testuser2")
     driver.find_element(By.XPATH, signup_xpaths["password"]).send_keys("password")
     driver.find_element(By.XPATH, signup_xpaths["signup_submit"]).click()
+    print("signed up")
 
 
 def login():
@@ -68,13 +70,16 @@ def login():
     driver.find_element(By.XPATH, login_xpaths["username"]).send_keys("testuser2")
     driver.find_element(By.XPATH, login_xpaths["password"]).send_keys("password")
     driver.find_element(By.XPATH, login_xpaths["login_button"]).click()
+    print("logged in")
 
 
 def download():
     #waits for login 2
     time.sleep(10)
     driver.find_element(By.XPATH, download_xpaths["download_button"]).click()
+    print("downloaded")
     time.sleep(10)
+
 
 signup()
 login()
