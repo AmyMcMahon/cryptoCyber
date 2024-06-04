@@ -37,22 +37,13 @@
             <button type="submit" data-target="modal-example" >Log in</button>
           </form>
 
-          <article class="pico-background-red-600">
-            <h2>DEV ONLY, GET RID OF LTR</h2>
-            <div role="group">
-              <a href="/admin"><button>Admin</button></a>
-              <a href="/user"><button>User</button></a>
-              <a href="/createAccount"><button>Sign Up</button></a>
-              <a href="/login"><button>log in as ____</button></a>
-            </div>
-
-          </article>
+          <a href="/script/createAccount"><button>Sign Up</button></a>
 
           {% include 'errorModal.html' %}
       </main>
 
   <script
-  src="{{ url_for('static', filename='js/index.js') }}"
+  src="{{ url_for('static', filename='script/js/index.js') }}"
   type="module"
 ></script>
 </body>

@@ -22,15 +22,11 @@
       </fieldset>
     </form>
 
-    <button>
-      <a href="/admin">Admin</a>
-    </button>
-    <button>
-      <a href="/user">User</a>
-    </button>
+    
+      <a href="/script/user"><button>User</button></a>
 
     {% include 'errorModal.html' %}
   </main>
-  <script src="{{ url_for('static', filename='js/createAccount.js') }}" type="module"></script>
+  <script src="{{ url_for('static', filename='script/js/createAccount.js') }}" type="module"></script>
 </body>
 </html>

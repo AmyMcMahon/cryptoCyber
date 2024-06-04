@@ -11,9 +11,9 @@
 <body>
   <main class="container">
     <h1 style="display: inline-block;">User Page</h1>
-    <button style="display: inline-block; margin-left:77%" onclick="window.location.href='/logout'">Logout</button>
+    <button style="display: inline-block; margin-left:77%" onclick="window.location.href='/script/logout'">Logout</button>
 
-    <form id="uploadForm" action="/upload" method="POST" enctype="multipart/form-data">
+    <form id="uploadForm" action="/script/upload" method="POST" enctype="multipart/form-data">
       <label for="file">Choose a file:</label>
       <input type="file" id="file" name="file" accept=".txt" required>
 
@@ -51,7 +51,7 @@
     {% include 'errorModal.html' %}
   </main>
 
-  <script src="{{ url_for('static', filename='js/user.js') }}" type="module"></script>
+  <script src="{{ url_for('static', filename='script/js/user.js') }}" type="module"></script>
 </body>
 
 </html>
