@@ -17,7 +17,7 @@ document.getElementById('loginForm').addEventListener('submit', async (event) =>
         });
 
         if (response.ok) {
-            window.location.replace("script/user");
+            window.location.replace("/script/user");
         } else {
             const errorData = await response.json();
             toggleModal('Error logging in: ' + errorData.error);
