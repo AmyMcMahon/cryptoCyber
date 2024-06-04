@@ -1,4 +1,4 @@
-import { toggleModal } from './errorModal.js';
+import { toggleModal } from '../errorModal.js';
 //set up section
 var idb = window.indexedDB.open("cs4455", 1);
 let db;

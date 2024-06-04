@@ -1,4 +1,4 @@
-import { toggleModal } from './errorModal.js';
+import { toggleModal } from '../errorModal.js';
 
 async function genKey() {
   console.log("gen key")
