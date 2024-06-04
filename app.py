@@ -104,17 +104,6 @@ def user():
     users = db.getAllUsers()
     return render_template("user.html", files=files, users=users)
 
-
-@app.route("/admin")
-@login_required
-def admin():
-    users = db.getAllUsersAdmin()
-    files = db.getAllFilesAdmin()
-    print(users)
-    # error cause password not in db???
-    return render_template("admin.html", users=users, files=files)
-
-
 @app.route("/upload", methods=["POST"])
 def upload_file():
     if "file" not in request.files:
