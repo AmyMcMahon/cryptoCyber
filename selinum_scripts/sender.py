@@ -71,8 +71,8 @@ def signup():
 
 def login():
     #waits for singup 1 & 2
-    driver.get("http://127.0.0.1:5000")
     time.sleep(10)
+    driver.get("http://127.0.0.1:5000")
     driver.find_element(By.XPATH, login_xpaths["username"]).send_keys("testuser1")
     driver.find_element(By.XPATH, login_xpaths["password"]).send_keys("password")
     driver.find_element(By.XPATH, login_xpaths["login_button"]).click()
