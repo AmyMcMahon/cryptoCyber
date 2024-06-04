@@ -123,7 +123,7 @@ async function handleUpload(event) {
   }
 
   try {
-    const response = await fetch(`/getPublicKey?user=${receiver}`);
+    const response = await fetch(`/script/getPublicKey?user=${receiver}`);
     const data = await response.json();
 
     if (data.error) {
@@ -143,7 +143,7 @@ async function handleUpload(event) {
     formData.append("iv", arrayBufferToBase64(iv));
     formData.append("encryptedSymmetricKey", arrayBufferToBase64(encryptedSymmetricKey));
     formData.append("select", receiver);
-    const uploadResponse = await fetch("/upload", {
+    const uploadResponse = await fetch("/script/upload", {
       method: "POST",
       body: formData
     });
@@ -252,12 +252,12 @@ async function importSignKey(key){
 async function downloadFile(id, fileName) {
   try {
     const privateKey = await getPrivateKey();
-    const keyResponse = await fetch(`/getEncryptedSymmetricKey?id=${id}`);
+    const keyResponse = await fetch(`/script/getEncryptedSymmetricKey?id=${id}`);
     const keyData = await keyResponse.json();
     if (keyData.error) {
       throw new Error(keyData.error);
     }
-    const signedFileResponse = await fetch(`/getSignedFile?id=${id}`);
+    const signedFileResponse = await fetch(`/script/getSignedFile?id=${id}`);
     const signature = await signedFileResponse.json();
     if (signature.error) {
       throw new Error(signature.error);
@@ -276,7 +276,7 @@ async function downloadFile(id, fileName) {
     const symmetricKey = await decryptSymmetricKey(privateKey, encryptedSymmetricKey);
     const decryptedIv = new Uint8Array(base64ToArrayBuffer(iv));
 
-    const fileResponse = await fetch(`/downloadEncryptedFile?id=${id}`);
+    const fileResponse = await fetch(`/script/downloadEncryptedFile?id=${id}`);
     if (!fileResponse.ok) {
       throw new Error('Failed to download file');
     }

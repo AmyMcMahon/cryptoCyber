@@ -205,4 +205,4 @@ def download_encrypted_file():
 
 if __name__ == "__main__":
     app.secret_key = "super secret"
-    app.run(port=8000)
+    app.run()

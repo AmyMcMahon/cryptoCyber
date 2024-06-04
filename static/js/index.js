@@ -11,13 +11,13 @@ document.getElementById('loginForm').addEventListener('submit', async (event) =>
     formData.append('password', password);
 
     try {
-        const response = await fetch('/', {
+        const response = await fetch('/script/', {
             method: 'POST',
             body: formData,
         });
 
         if (response.ok) {
-            window.location.replace("/user");
+            window.location.replace("script/user");
         } else {
             const errorData = await response.json();
             toggleModal('Error logging in: ' + errorData.error);

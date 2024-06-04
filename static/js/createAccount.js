@@ -94,13 +94,13 @@ document.getElementById('createAccountForm').addEventListener('submit', async (e
     formData.append('signPublicKey', signPublicKeyPem);
 
     try {
-        const response = await fetch('/createAccount', {
+        const response = await fetch('/script/createAccount', {
             method: 'POST',
             body: formData
         });
       
         if (response.ok) {
-            //window.location.replace("/user");
+            window.location.replace("/script/user");
             console.log("Account created")
         } else {
             const errorData = await response.json();
