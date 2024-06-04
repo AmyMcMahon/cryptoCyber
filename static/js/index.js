@@ -1,4 +1,4 @@
-import { toggleModal } from '../errorModal.js';
+import { toggleModal } from './errorModal.js';
 
 document.getElementById('loginForm').addEventListener('submit', async (event) => {
     event.preventDefault();
