@@ -54,6 +54,7 @@ def index():
         if db.check_Login(username, password):
             userToLogin = db.getUser(username)
             login_user(userToLogin, remember=False)
+            print(url_for("script/user"))
             return redirect(url_for("script/user"))
         else:
             return jsonify(error="Invalid username or password"), 401
