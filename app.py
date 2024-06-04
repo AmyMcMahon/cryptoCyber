@@ -54,7 +54,7 @@ def index():
         if db.check_Login(username, password):
             userToLogin = db.getUser(username)
             login_user(userToLogin, remember=False)
-            return redirect(url_for("user"))
+            return redirect(url_for("script/user"))
         else:
             return jsonify(error="Invalid username or password"), 401
     return render_template("index.html")
@@ -64,7 +64,7 @@ def index():
 @login_required
 def logout():
     logout_user()
-    return redirect(url_for("script/index"))
+    return redirect(url_for("index"))
 
 
 # Route for create account page
