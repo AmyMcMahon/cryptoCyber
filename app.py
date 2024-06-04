@@ -64,7 +64,7 @@ def index():
 @login_required
 def logout():
     logout_user()
-    return redirect(url_for("index"))
+    return redirect(url_for("script/index"))
 
 
 # Route for create account page
